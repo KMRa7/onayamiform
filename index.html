@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>サポートフォーム</title>
@@ -250,38 +249,22 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-          // LIFF の初期化
-          liff.init({
-            liffId: "あなたのLIFF ID" // LINE Developersコンソールで取得したID
-          })
-          .then(() => {
-            console.log("LIFF initialized!");
-            // ここに初期化後の処理を書く
-          })
-          .catch((err) => {
-            console.error("LIFF initialization failed", err);
-          });
-        });
-        
-        // sendToLine関数を実際の実装に置き換え
-        function sendToLine(formData) {
-          // LIFF経由でLINEにメッセージを送信
-          liff.sendMessages([
-            {
-              type: 'text',
-              text: formData
+            // LIFFの初期化
+            try {
+                // 実際の使用時はコメントアウトを外し、LIFF IDを設定してください
+                liff.init({
+                    liffId: "2007077943-Qz5kL7mm" // LINE Developersコンソールで取得したID
+                })
+                .then(() => {
+                    console.log("LIFF initialized!");
+                })
+                .catch((err) => {
+                    console.error("LIFF initialization failed", err);
+                });
+                console.log("LIFF would initialize here in production");
+            } catch (e) {
+                console.log("LIFF初期化エラー:", e);
             }
-          ])
-          .then(() => {
-            // 送信成功時の処理
-            console.log("Message sent!");
-            liff.closeWindow(); // LIFF画面を閉じる
-          })
-          .catch((err) => {
-            // 送信失敗時の処理
-            console.error("Error sending message", err);
-          });
-        }
 
             // 日付時間ピッカーの初期化
             const dateTimeConfig = {
@@ -307,7 +290,6 @@
                 console.log("LINE送信データ:", formData);
                 
                 // 実際の環境では以下のようなコードが必要
-                /*
                 liff.sendMessages([
                     {
                         type: 'text',
@@ -322,7 +304,6 @@
                     console.error("メッセージ送信エラー", err);
                     alert("メッセージの送信に失敗しました");
                 });
-                */
                 
                 // デモ用：成功したふりをする
                 alert("LINEに内容を送信しました！");
