@@ -1,11 +1,17 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    // HTML のhead部分に追加
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>サポートフォーム</title>
+    <!-- flatpickrのCSSとJavaScript -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/themes/material_blue.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/ja.min.js"></script>
+    <!-- LIFF SDK -->
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         body {
             font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
@@ -128,6 +134,22 @@
             background-color: #e0e0e0;
             color: #333;
         }
+        /* 日付ピッカー用のスタイル */
+        .date-time-picker {
+            width: 100%;
+            cursor: pointer;
+        }
+        .calendar-icon {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            pointer-events: none;
+        }
+        .picker-container {
+            position: relative;
+        }
     </style>
 </head>
 <body>
@@ -145,27 +167,37 @@
             <form id="meeting-form">
                 <div class="form-group">
                     <label class="required" for="first-choice">第1希望：</label>
-                    <input type="text" id="first-choice" required>
+                    <div class="picker-container">
+                        <input type="text" id="first-choice" class="date-time-picker" required placeholder="日付と時間を選択" readonly>
+                    </div>
                 </div>
                 
                 <div class="form-group">
                     <label class="required" for="second-choice">第2希望：</label>
-                    <input type="text" id="second-choice" required>
+                    <div class="picker-container">
+                        <input type="text" id="second-choice" class="date-time-picker" required placeholder="日付と時間を選択" readonly>
+                    </div>
                 </div>
                 
                 <div class="form-group">
                     <label class="required" for="third-choice">第3希望：</label>
-                    <input type="text" id="third-choice" required>
+                    <div class="picker-container">
+                        <input type="text" id="third-choice" class="date-time-picker" required placeholder="日付と時間を選択" readonly>
+                    </div>
                 </div>
                 
                 <div class="form-group">
                     <label for="fourth-choice">第4希望：</label>
-                    <input type="text" id="fourth-choice">
+                    <div class="picker-container">
+                        <input type="text" id="fourth-choice" class="date-time-picker" placeholder="日付と時間を選択" readonly>
+                    </div>
                 </div>
                 
                 <div class="form-group">
                     <label for="fifth-choice">第5希望：</label>
-                    <input type="text" id="fifth-choice">
+                    <div class="picker-container">
+                        <input type="text" id="fifth-choice" class="date-time-picker" placeholder="日付と時間を選択" readonly>
+                    </div>
                 </div>
                 
                 <div class="form-group">
@@ -195,6 +227,7 @@
         <!-- サポートミーティング確認画面 -->
         <div class="confirmation" id="meeting-confirmation">
             <h2>確認画面</h2>
+            <div id="meeting-summary"></div>
             <p>内容ご確認後担当者からご連絡させていただきます。</p>
             <p>ご予約埋まっている場合はご希望に添えない場合もございますのでご認識の程よろしくお願いいたします。</p>
             <button class="confirm-btn" id="meeting-confirm-btn">確認</button>
@@ -216,159 +249,230 @@
     </div>
 
     <script>
-        // LINEとの連携用（LINESDKの初期化などが必要）
+        document.addEventListener('DOMContentLoaded', function() {
+          // LIFF の初期化
+          liff.init({
+            liffId: "あなたのLIFF ID" // LINE Developersコンソールで取得したID
+          })
+          .then(() => {
+            console.log("LIFF initialized!");
+            // ここに初期化後の処理を書く
+          })
+          .catch((err) => {
+            console.error("LIFF initialization failed", err);
+          });
+        });
+        
+        // sendToLine関数を実際の実装に置き換え
         function sendToLine(formData) {
-            // script部分の最初に追加
-            document.addEventListener('DOMContentLoaded', function() {
-              // LIFF の初期化
-              liff.init({
-                liffId: "あなたのLIFF ID" // LINE Developersコンソールで取得したID
-              })
-              .then(() => {
-                console.log("LIFF initialized!");
-                // ここに初期化後の処理を書く
-              })
-              .catch((err) => {
-                console.error("LIFF initialization failed", err);
-              });
-            });
-            
-            // sendToLine関数を実際の実装に置き換え
-            function sendToLine(formData) {
-              // LIFF経由でLINEにメッセージを送信
-              liff.sendMessages([
-                {
-                  type: 'text',
-                  text: formData
-                }
-              ])
-              .then(() => {
-                // 送信成功時の処理
-                console.log("Message sent!");
-                liff.closeWindow(); // LIFF画面を閉じる
-              })
-              .catch((err) => {
-                // 送信失敗時の処理
-                console.error("Error sending message", err);
-              });
+          // LIFF経由でLINEにメッセージを送信
+          liff.sendMessages([
+            {
+              type: 'text',
+              text: formData
             }
+          ])
+          .then(() => {
+            // 送信成功時の処理
+            console.log("Message sent!");
+            liff.closeWindow(); // LIFF画面を閉じる
+          })
+          .catch((err) => {
+            // 送信失敗時の処理
+            console.error("Error sending message", err);
+          });
         }
 
-        // タブ切り替え処理
-        document.getElementById('support-btn').addEventListener('click', function() {
-            document.getElementById('support-btn').classList.add('active');
-            document.getElementById('consultation-btn').classList.remove('active');
-            document.getElementById('support-form').classList.add('active');
-            document.getElementById('consultation-form').classList.remove('active');
-            document.getElementById('meeting-confirmation').style.display = 'none';
-            document.getElementById('consult-notice').style.display = 'none';
-        });
-
-        document.getElementById('consultation-btn').addEventListener('click', function() {
-            document.getElementById('consultation-btn').classList.add('active');
-            document.getElementById('support-btn').classList.remove('active');
-            document.getElementById('consultation-form').classList.add('active');
-            document.getElementById('support-form').classList.remove('active');
-            document.getElementById('meeting-confirmation').style.display = 'none';
-            document.getElementById('consult-notice').style.display = 'none';
-        });
-
-        // サポートミーティングフォーム送信処理
-        document.getElementById('meeting-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // フォームデータの取得
-            const formData = {
-                type: 'サポートミーティング',
-                firstChoice: document.getElementById('first-choice').value,
-                secondChoice: document.getElementById('second-choice').value,
-                thirdChoice: document.getElementById('third-choice').value,
-                fourthChoice: document.getElementById('fourth-choice').value,
-                fifthChoice: document.getElementById('fifth-choice').value,
-                content: document.getElementById('meeting-content').value
+            // 日付時間ピッカーの初期化
+            const dateTimeConfig = {
+                enableTime: true,        // 時間選択を有効化
+                dateFormat: "Y年m月d日 H:i", // 日時フォーマット
+                minDate: "today",        // 本日以降のみ選択可能
+                locale: "ja",            // 日本語化
+                time_24hr: true,         // 24時間表示
+                minuteIncrement: 30,     // 30分単位で選択
+                disableMobile: false     // モバイルでもカスタムUIを使用
             };
-            
-            // ローカルストレージに一時保存
-            localStorage.setItem('formData', JSON.stringify(formData));
-            
-            // 確認画面表示
-            document.getElementById('support-form').classList.remove('active');
-            document.getElementById('meeting-confirmation').style.display = 'block';
-        });
 
-        // サポートミーティング確認ボタン
-        document.getElementById('meeting-confirm-btn').addEventListener('click', function() {
-            const formData = JSON.parse(localStorage.getItem('formData'));
-            
-            // LINEにデータを送信
-            let message = 
-                `【サポートミーティング希望】\n` +
-                `\n第1希望：${formData.firstChoice}` +
-                `\n第2希望：${formData.secondChoice}` +
-                `\n第3希望：${formData.thirdChoice}`;
+            // 各日時選択フィールドにflatpickrを適用
+            flatpickr("#first-choice", dateTimeConfig);
+            flatpickr("#second-choice", dateTimeConfig);
+            flatpickr("#third-choice", dateTimeConfig);
+            flatpickr("#fourth-choice", dateTimeConfig);
+            flatpickr("#fifth-choice", dateTimeConfig);
+
+            // LINEとの連携用
+            function sendToLine(formData) {
+                // 実際の環境ではLIFF SDKを使用したメッセージ送信処理を実装
+                console.log("LINE送信データ:", formData);
                 
-            if (formData.fourthChoice) {
-                message += `\n第4希望：${formData.fourthChoice}`;
-            }
-            
-            if (formData.fifthChoice) {
-                message += `\n第5希望：${formData.fifthChoice}`;
-            }
-            
-            message += `\n\n内容：${formData.content}`;
-            
-            sendToLine(message);
-            
-            // フォームリセット
-            document.getElementById('meeting-form').reset();
-            
-            // 初期表示に戻す
-            document.getElementById('meeting-confirmation').style.display = 'none';
-            document.getElementById('support-form').classList.add('active');
-        });
-
-        // お悩み相談フォーム送信処理
-        document.getElementById('consult-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // フォームデータの取得
-            const formData = {
-                type: 'お悩み相談',
-                content: document.getElementById('consult-content').value
-            };
-            
-            // ローカルストレージに一時保存
-            localStorage.setItem('formData', JSON.stringify(formData));
-            
-            // 確認画面表示
-            document.getElementById('consultation-form').classList.remove('active');
-            document.getElementById('consult-notice').style.display = 'block';
-        });
-
-        // お悩み相談「はい」ボタン
-        document.getElementById('yes-btn').addEventListener('click', function() {
-            const formData = JSON.parse(localStorage.getItem('formData'));
-            
-            // LINEにデータを送信
-            const message = 
-                `【お悩み相談】\n` +
-                `\n内容：${formData.content}`;
+                // 実際の環境では以下のようなコードが必要
+                /*
+                liff.sendMessages([
+                    {
+                        type: 'text',
+                        text: formData
+                    }
+                ])
+                .then(() => {
+                    console.log("メッセージ送信成功");
+                    liff.closeWindow();
+                })
+                .catch((err) => {
+                    console.error("メッセージ送信エラー", err);
+                    alert("メッセージの送信に失敗しました");
+                });
+                */
                 
-            sendToLine(message);
-            
-            // フォームリセット
-            document.getElementById('consult-form').reset();
-            
-            // 初期表示に戻す
-            document.getElementById('consult-notice').style.display = 'none';
-            document.getElementById('consultation-form').classList.add('active');
-        });
+                // デモ用：成功したふりをする
+                alert("LINEに内容を送信しました！");
+            }
 
-        // お悩み相談「いいえ」ボタン
-        document.getElementById('no-btn').addEventListener('click', function() {
-            // 注意事項画面を閉じてフォームに戻る
-            document.getElementById('consult-notice').style.display = 'none';
-            document.getElementById('consultation-form').classList.add('active');
+            // タブ切り替え処理
+            document.getElementById('support-btn').addEventListener('click', function() {
+                document.getElementById('support-btn').classList.add('active');
+                document.getElementById('consultation-btn').classList.remove('active');
+                document.getElementById('support-form').classList.add('active');
+                document.getElementById('consultation-form').classList.remove('active');
+                document.getElementById('meeting-confirmation').style.display = 'none';
+                document.getElementById('consult-notice').style.display = 'none';
+            });
+
+            document.getElementById('consultation-btn').addEventListener('click', function() {
+                document.getElementById('consultation-btn').classList.add('active');
+                document.getElementById('support-btn').classList.remove('active');
+                document.getElementById('consultation-form').classList.add('active');
+                document.getElementById('support-form').classList.remove('active');
+                document.getElementById('meeting-confirmation').style.display = 'none';
+                document.getElementById('consult-notice').style.display = 'none';
+            });
+
+            // サポートミーティングフォーム送信処理
+            document.getElementById('meeting-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // フォームデータの取得
+                const formData = {
+                    type: 'サポートミーティング',
+                    firstChoice: document.getElementById('first-choice').value,
+                    secondChoice: document.getElementById('second-choice').value,
+                    thirdChoice: document.getElementById('third-choice').value,
+                    fourthChoice: document.getElementById('fourth-choice').value,
+                    fifthChoice: document.getElementById('fifth-choice').value,
+                    content: document.getElementById('meeting-content').value
+                };
+                
+                // 必須項目チェック
+                if (!formData.firstChoice || !formData.secondChoice || !formData.thirdChoice) {
+                    alert("第1〜第3希望は必須項目です。日時を選択してください。");
+                    return;
+                }
+                
+                // ローカルストレージに一時保存
+                localStorage.setItem('formData', JSON.stringify(formData));
+                
+                // 確認画面に内容を表示
+                let summaryHTML = `
+                    <div style="text-align: left; margin: 20px 0;">
+                        <p><strong>第1希望:</strong> ${formData.firstChoice}</p>
+                        <p><strong>第2希望:</strong> ${formData.secondChoice}</p>
+                        <p><strong>第3希望:</strong> ${formData.thirdChoice}</p>
+                `;
+                
+                if (formData.fourthChoice) {
+                    summaryHTML += `<p><strong>第4希望:</strong> ${formData.fourthChoice}</p>`;
+                }
+                
+                if (formData.fifthChoice) {
+                    summaryHTML += `<p><strong>第5希望:</strong> ${formData.fifthChoice}</p>`;
+                }
+                
+                summaryHTML += `
+                        <p><strong>内容:</strong> ${formData.content || '(未入力)'}</p>
+                    </div>
+                `;
+                
+                document.getElementById('meeting-summary').innerHTML = summaryHTML;
+                
+                // 確認画面表示
+                document.getElementById('support-form').classList.remove('active');
+                document.getElementById('meeting-confirmation').style.display = 'block';
+            });
+
+            // サポートミーティング確認ボタン
+            document.getElementById('meeting-confirm-btn').addEventListener('click', function() {
+                const formData = JSON.parse(localStorage.getItem('formData'));
+                
+                // LINEにデータを送信
+                let message = 
+                    `【サポートミーティング希望】\n` +
+                    `\n第1希望：${formData.firstChoice}` +
+                    `\n第2希望：${formData.secondChoice}` +
+                    `\n第3希望：${formData.thirdChoice}`;
+                    
+                if (formData.fourthChoice) {
+                    message += `\n第4希望：${formData.fourthChoice}`;
+                }
+                
+                if (formData.fifthChoice) {
+                    message += `\n第5希望：${formData.fifthChoice}`;
+                }
+                
+                message += `\n\n内容：${formData.content || '(未入力)'}`;
+                
+                sendToLine(message);
+                
+                // フォームリセット
+                document.getElementById('meeting-form').reset();
+                
+                // 初期表示に戻す
+                document.getElementById('meeting-confirmation').style.display = 'none';
+                document.getElementById('support-form').classList.add('active');
+            });
+
+            // お悩み相談フォーム送信処理
+            document.getElementById('consult-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // フォームデータの取得
+                const formData = {
+                    type: 'お悩み相談',
+                    content: document.getElementById('consult-content').value
+                };
+                
+                // ローカルストレージに一時保存
+                localStorage.setItem('formData', JSON.stringify(formData));
+                
+                // 確認画面表示
+                document.getElementById('consultation-form').classList.remove('active');
+                document.getElementById('consult-notice').style.display = 'block';
+            });
+
+            // お悩み相談「はい」ボタン
+            document.getElementById('yes-btn').addEventListener('click', function() {
+                const formData = JSON.parse(localStorage.getItem('formData'));
+                
+                // LINEにデータを送信
+                const message = 
+                    `【お悩み相談】\n` +
+                    `\n内容：${formData.content}`;
+                    
+                sendToLine(message);
+                
+                // フォームリセット
+                document.getElementById('consult-form').reset();
+                
+                // 初期表示に戻す
+                document.getElementById('consult-notice').style.display = 'none';
+                document.getElementById('consultation-form').classList.add('active');
+            });
+
+            // お悩み相談「いいえ」ボタン
+            document.getElementById('no-btn').addEventListener('click', function() {
+                // 注意事項画面を閉じてフォームに戻る
+                document.getElementById('consult-notice').style.display = 'none';
+                document.getElementById('consultation-form').classList.add('active');
+            });
         });
     </script>
 </body>
