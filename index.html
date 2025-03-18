@@ -310,6 +310,31 @@
         .slide-in {
             animation-name: slideIn;
         }
+        /* モバイル最適化のための追加スタイル */
+        @media (max-width: 480px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+                max-width: 100%;
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+            }
+            .form-section, .confirmation {
+                flex: 1;
+                overflow-y: auto;
+            }
+            /* モバイルでのflatpickrカレンダーのサイズと位置調整 */
+            .flatpickr-calendar {
+                width: 100% !important;
+                max-width: 350px;
+                left: 50% !important;
+                transform: translateX(-50%);
+            }
+            .flatpickr-months, .flatpickr-weekdays, .flatpickr-days {
+                width: 100% !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -433,6 +458,8 @@
             // タブの状態を保存する変数
             let currentTab = 'support'; // デフォルトはサポートミーティング
             let consultationState = 'notice'; // 相談依頼の初期状態は注意事項
+            // flatpickrインスタンスを格納する配列
+            let pickers = [];
 
             // LIFFの初期化
             try {
@@ -450,6 +477,15 @@
                 console.log("LIFF初期化エラー:", e);
             }
 
+            // 全てのflatpickrインスタンスを閉じる関数
+            function closeAllDatepickers() {
+                pickers.forEach(picker => {
+                    if (picker && picker.isOpen) {
+                        picker.close();
+                    }
+                });
+            }
+
             // 日付時間ピッカーの初期化
             const dateTimeConfig = {
                 enableTime: true,
@@ -461,9 +497,41 @@
                 disableMobile: true,
                 allowInput: false,
                 static: true,
+                position: "auto",
+                positionElement: null,
                 onOpen: function(selectedDates, dateStr, instance) {
-                    // カレンダーが開いたときにz-indexを高くする
-                    instance.calendarContainer.style.zIndex = 9999;
+                    // 他のデートピッカーを閉じる
+                    closeAllDatepickers();
+                    
+                    // モバイル用の位置調整
+                    if (window.innerWidth <= 480) {
+                        const inputRect = instance.element.getBoundingClientRect();
+                        const windowHeight = window.innerHeight;
+                        
+                        // インプット要素が画面の上半分にある場合はその下に表示
+                        // 下半分にある場合はその上に表示
+                        if (inputRect.top < windowHeight / 2) {
+                            instance.calendarContainer.style.top = (inputRect.bottom + window.scrollY) + 'px';
+                        } else {
+                            const calendarHeight = instance.calendarContainer.offsetHeight || 300;
+                            instance.calendarContainer.style.top = ((inputRect.top + window.scrollY) - calendarHeight) + 'px';
+                        }
+                        
+                        // 左右の位置調整（中央寄せ）
+                        instance.calendarContainer.style.left = '50%';
+                        instance.calendarContainer.style.transform = 'translateX(-50%)';
+                        instance.calendarContainer.style.right = 'auto';
+                    }
+                    
+                    // z-indexを高く設定
+                    instance.calendarContainer.style.zIndex = 999999;
+                },
+                onClose: function(selectedDates, dateStr, instance) {
+                    // 閉じるときのアニメーション
+                    instance.calendarContainer.style.opacity = 0;
+                    setTimeout(() => {
+                        instance.calendarContainer.style.opacity = 1;
+                    }, 300);
                 }
             };
             
@@ -479,10 +547,33 @@
                 }
             ];
             
-            // 各日時選択フィールドにflatpickrを適用
-            const pickers = document.querySelectorAll('.date-time-picker');
-            pickers.forEach(picker => {
-                flatpickr(picker, dateTimeConfig);
+            // 各日時選択フィールドにflatpickrを適用し、インスタンスを保存
+            const dateInputs = document.querySelectorAll('.date-time-picker');
+            dateInputs.forEach(input => {
+                const fp = flatpickr(input, dateTimeConfig);
+                pickers.push(fp);
+                
+                // クリックイベントリスナーを追加（スマホ対応）
+                input.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    // すでに開いている場合は何もしない
+                    if (!fp.isOpen) {
+                        // 他のデートピッカーを閉じてから開く
+                        closeAllDatepickers();
+                        fp.open();
+                    }
+                });
+            });
+
+            // bodyにクリックイベントを追加して、カレンダー外をクリックしたときに閉じるようにする
+            document.body.addEventListener('click', function(e) {
+                // カレンダー内や日付入力欄のクリックでなければ
+                const isCalendarClick = e.target.closest('.flatpickr-calendar');
+                const isInputClick = e.target.closest('.date-time-picker');
+                
+                if (!isCalendarClick && !isInputClick) {
+                    closeAllDatepickers();
+                }
             });
 
             // LINEとの連携用
@@ -533,6 +624,9 @@
                 document.getElementById('consult-notice').classList.remove('active');
                 document.getElementById('consultation-form').classList.remove('active');
                 document.getElementById('meeting-confirmation').style.display = 'none';
+                
+                // すべてのデートピッカーを閉じる
+                closeAllDatepickers();
             }
 
             // タブ切り替え処理
@@ -575,6 +669,9 @@
             // サポートミーティングフォーム送信処理
             document.getElementById('meeting-form').addEventListener('submit', function(e) {
                 e.preventDefault();
+                
+                // すべてのデートピッカーを閉じる
+                closeAllDatepickers();
                 
                 // フォームデータの取得
                 const formData = {
