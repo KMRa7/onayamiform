@@ -258,6 +258,7 @@
             border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+            z-index: 9999 !important;
         }
         .flatpickr-day.selected {
             background: #06C755 !important;
@@ -437,59 +438,70 @@
                 allowInput: false,
                 static: true,
                 onOpen: function(selectedDates, dateStr, instance) {
-                    instance.calendarContainer.style.zIndex = 999;
+                    // カレンダーが開いたときにz-indexを高くする
+                    instance.calendarContainer.style.zIndex = 9999;
                 }
             };
 
-            // 営業時間内のみ選択可能にする (9:00-18:00、土日除く)
-            dateTimeConfig.enable = [
-                function(date) {
-                    return date.getHours() >= 9 && date.getHours() < 18 && date.getDay() !== 0 && date.getDay() !== 6;
-                }
-            ];
+            // 営業時間内のみ選択可能にする (9:30-17:00、土日除く)
+            const enableTimeRange = function(date) {
+                // 日付部分のみのチェック（土日を除外）
+                const isWeekday = date.getDay() !== 0 && date.getDay() !== 6;
+                
+                // 時間のチェック - 9:30から17:00まで
+                const hour = date.getHours();
+                const minutes = date.getMinutes();
+                
+                // 9:30-17:00の範囲チェック
+                const isValidTime = (hour > 9 || (hour === 9 && minutes >= 30)) && hour < 17;
+                
+                return isWeekday && isValidTime;
+            };
+
+            // 日付部分と時間部分を分離して、より柔軟な条件設定
+            dateTimeConfig.enable = [enableTimeRange];
 
             // 各日時選択フィールドにflatpickrを適用
-            const pickers = [
-                flatpickr("#first-choice", dateTimeConfig),
-                flatpickr("#second-choice", dateTimeConfig),
-                flatpickr("#third-choice", dateTimeConfig),
-                flatpickr("#fourth-choice", dateTimeConfig),
-                flatpickr("#fifth-choice", dateTimeConfig)
-            ];
+            const pickers = document.querySelectorAll('.date-time-picker');
+            pickers.forEach(picker => {
+                flatpickr(picker, dateTimeConfig);
+            });
 
             // LINEとの連携用
             function sendToLine(formData) {
-                liff.sendMessages([
-                    {
-                        type: 'text',
-                        text: formData
-                    }
-                ])
-                .then(() => {
-                    console.log("メッセージ送信成功");
-                    // フォームリセット
-                    document.getElementById('meeting-form').reset();
-                    document.getElementById('consult-form').reset();
-                    
-                    // ピッカーもリセット
-                    pickers.forEach(picker => picker.clear());
-                    
-                    // 初期表示に戻す
-                    document.getElementById('meeting-confirmation').style.display = 'none';
-                    document.getElementById('consult-notice').style.display = 'none';
-                    document.getElementById('support-form').classList.add('active');
-                    
-                    alert("送信が完了しました。LINEに戻ります。");
-                    
-                    // LIFFウィンドウを閉じる
-                    setTimeout(() => {
-                        liff.closeWindow();
-                    }, 1000);
-                })
-                .catch((err) => {
-                    console.error("メッセージ送信エラー", err);
-                    alert("メッセージの送信に失敗しました: " + err.message);
-                });
+                try {
+                    liff.sendMessages([
+                        {
+                            type: 'text',
+                            text: formData
+                        }
+                    ])
+                    .then(() => {
+                        console.log("メッセージ送信成功");
+                        // フォームリセット
+                        document.getElementById('meeting-form').reset();
+                        document.getElementById('consult-form').reset();
+                        
+                        // 初期表示に戻す
+                        document.getElementById('meeting-confirmation').style.display = 'none';
+                        document.getElementById('consult-notice').style.display = 'none';
+                        document.getElementById('support-form').classList.add('active');
+                        
+                        alert("送信が完了しました。LINEに戻ります。");
+                        
+                        // LIFFウィンドウを閉じる
+                        setTimeout(() => {
+                            liff.closeWindow();
+                        }, 1000);
+                    })
+                    .catch((err) => {
+                        console.error("メッセージ送信エラー", err);
+                        alert("メッセージの送信に失敗しました: " + err.message);
+                    });
+                } catch (e) {
+                    console.error("LINE連携エラー:", e);
+                    alert("LINE連携エラー: " + e.message);
+                }
             }
 
             // タブ切り替え処理
