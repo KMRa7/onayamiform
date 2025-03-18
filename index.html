@@ -442,25 +442,19 @@
                     instance.calendarContainer.style.zIndex = 9999;
                 }
             };
-
-            // 営業時間内のみ選択可能にする (9:30-17:00、土日除く)
-            const enableTimeRange = function(date) {
-                // 日付部分のみのチェック（土日を除外）
-                const isWeekday = date.getDay() !== 0 && date.getDay() !== 6;
-                
-                // 時間のチェック - 9:30から17:00まで
-                const hour = date.getHours();
-                const minutes = date.getMinutes();
-                
-                // 9:30-17:00の範囲チェック
-                const isValidTime = (hour > 9 || (hour === 9 && minutes >= 30)) && hour < 17;
-                
-                return isWeekday && isValidTime;
-            };
-
-            // 日付部分と時間部分を分離して、より柔軟な条件設定
-            dateTimeConfig.enable = [enableTimeRange];
-
+            
+            // 時間範囲の制限（9:30-17:00）
+            dateTimeConfig.minTime = "09:30";
+            dateTimeConfig.maxTime = "17:00";
+            
+            // 土日を無効化
+            dateTimeConfig.disable = [
+                function(date) {
+                    // 日曜(0)または土曜(6)の場合は選択不可
+                    return date.getDay() === 0 || date.getDay() === 6;
+                }
+            ];
+            
             // 各日時選択フィールドにflatpickrを適用
             const pickers = document.querySelectorAll('.date-time-picker');
             pickers.forEach(picker => {
