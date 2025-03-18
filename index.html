@@ -196,7 +196,6 @@
         .notice-btns {
             display: flex;
             justify-content: center;
-            gap: 15px;
             margin-top: 25px;
         }
         .yes-btn, .back-btn {
@@ -209,7 +208,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 120px;
+            width: 160px;
         }
         .yes-btn {
             background-color: #06C755;
@@ -431,6 +430,10 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // タブの状態を保存する変数
+            let currentTab = 'support'; // デフォルトはサポートミーティング
+            let consultationState = 'notice'; // 相談依頼の初期状態は注意事項
+
             // LIFFの初期化
             try {
                 liff.init({
@@ -503,6 +506,10 @@
                         document.getElementById('consult-notice').style.display = 'none';
                         document.getElementById('consultation-form').style.display = 'none';
                         
+                        // タブとステートをリセット
+                        currentTab = 'support';
+                        consultationState = 'notice';
+                        
                         alert("送信が完了しました。LINEに戻ります。");
                         
                         // LIFFウィンドウを閉じる
@@ -520,29 +527,49 @@
                 }
             }
 
+            // 全てのフォームセクションを非表示にする関数
+            function hideAllFormSections() {
+                document.getElementById('support-form').classList.remove('active');
+                document.getElementById('consult-notice').classList.remove('active');
+                document.getElementById('consultation-form').classList.remove('active');
+                document.getElementById('meeting-confirmation').style.display = 'none';
+            }
+
             // タブ切り替え処理
             document.getElementById('support-btn').addEventListener('click', function() {
+                if (currentTab === 'support') return; // すでにアクティブなら何もしない
+                
                 // サポートミーティングタブをアクティブに
                 document.getElementById('support-btn').classList.add('active');
                 document.getElementById('consultation-btn').classList.remove('active');
                 
                 // フォームの表示切り替え
+                hideAllFormSections();
                 document.getElementById('support-form').classList.add('active');
-                document.getElementById('consult-notice').classList.remove('active');
-                document.getElementById('consultation-form').classList.remove('active');
-                document.getElementById('meeting-confirmation').style.display = 'none';
+                
+                // 現在のタブを更新
+                currentTab = 'support';
             });
 
             document.getElementById('consultation-btn').addEventListener('click', function() {
+                if (currentTab === 'consultation') return; // すでにアクティブなら何もしない
+                
                 // 相談依頼タブをアクティブに
                 document.getElementById('consultation-btn').classList.add('active');
                 document.getElementById('support-btn').classList.remove('active');
                 
-                // フォームの表示切り替え - 注意事項を表示
-                document.getElementById('consult-notice').classList.add('active');
-                document.getElementById('support-form').classList.remove('active');
-                document.getElementById('consultation-form').classList.remove('active');
-                document.getElementById('meeting-confirmation').style.display = 'none';
+                // フォームの表示切り替え
+                hideAllFormSections();
+                
+                // 保存されたステートに基づいて適切なフォームを表示
+                if (consultationState === 'notice') {
+                    document.getElementById('consult-notice').classList.add('active');
+                } else {
+                    document.getElementById('consultation-form').classList.add('active');
+                }
+                
+                // 現在のタブを更新
+                currentTab = 'consultation';
             });
 
             // サポートミーティングフォーム送信処理
@@ -593,7 +620,7 @@
                 document.getElementById('meeting-summary').innerHTML = summaryHTML;
                 
                 // 確認画面表示
-                document.getElementById('support-form').classList.remove('active');
+                hideAllFormSections();
                 document.getElementById('meeting-confirmation').style.display = 'block';
                 document.getElementById('meeting-confirmation').classList.add('animated');
                 document.getElementById('meeting-confirmation').classList.add('slide-in');
@@ -625,14 +652,16 @@
 
             // 相談依頼の注意事項「次へ進む」ボタン
             document.getElementById('yes-btn').addEventListener('click', function() {
-                document.getElementById('consult-notice').classList.remove('active');
+                hideAllFormSections();
                 document.getElementById('consultation-form').classList.add('active');
+                consultationState = 'form'; // 相談依頼フォームに移動したことを記録
             });
 
             // 相談依頼フォームの「戻る」ボタン
             document.getElementById('back-btn').addEventListener('click', function() {
-                document.getElementById('consultation-form').classList.remove('active');
+                hideAllFormSections();
                 document.getElementById('consult-notice').classList.add('active');
+                consultationState = 'notice'; // 注意事項に戻ったことを記録
             });
 
             // 相談依頼フォーム送信処理
