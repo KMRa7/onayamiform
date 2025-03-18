@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/themes/material_blue.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/ja.min.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- LIFF SDK -->
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
@@ -16,233 +18,391 @@
             font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f5f5f5;
+            background-color: #f8f9fa;
             color: #333;
+            line-height: 1.6;
         }
         .container {
             max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
+            margin: 20px auto;
+            padding: 0;
             background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .header {
+            background-color: #06C755;
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            margin-bottom: 0;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
         }
         .tab-buttons {
             display: flex;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            overflow: hidden;
+            background-color: #f1f1f1;
+            border-bottom: 1px solid #ddd;
         }
         .tab-button {
             flex: 1;
             padding: 15px;
             text-align: center;
-            background-color: #e0e0e0;
+            background-color: #f8f8f8;
             border: none;
             cursor: pointer;
-            font-weight: bold;
-            transition: background-color 0.3s;
+            font-weight: 600;
+            transition: all 0.3s;
+            color: #666;
+            position: relative;
         }
         .tab-button.active {
             background-color: #06C755;
             color: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .tab-button.active:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 8px solid white;
         }
         .form-section {
             display: none;
+            padding: 25px;
         }
         .form-section.active {
             display: block;
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         h2 {
             text-align: center;
             margin-bottom: 20px;
-            color: #333;
+            color: #06C755;
+            font-weight: 600;
+            font-size: 1.3rem;
         }
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+        }
+        .required:after {
+            content: " *";
+            color: #e74c3c;
             font-weight: bold;
         }
         input[type="text"], textarea {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             border: 1px solid #ddd;
-            border-radius: 4px;
+            border-radius: 8px;
             box-sizing: border-box;
+            transition: border 0.3s;
+            font-size: 16px;
+        }
+        input[type="text"]:focus, textarea:focus {
+            border-color: #06C755;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(6, 199, 85, 0.1);
         }
         textarea {
-            height: 120px;
+            height: 150px;
             resize: vertical;
-        }
-        .required:after {
-            content: "*";
-            color: red;
         }
         .submit-btn {
             background-color: #06C755;
             color: white;
             border: none;
-            padding: 12px 20px;
-            border-radius: 4px;
+            padding: 14px 20px;
+            border-radius: 8px;
             cursor: pointer;
             width: 100%;
             font-size: 16px;
             font-weight: bold;
-            margin-top: 10px;
+            margin-top: 20px;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(6, 199, 85, 0.2);
         }
-        .confirmation {
+        .submit-btn:hover {
+            background-color: #05a548;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(6, 199, 85, 0.3);
+        }
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+        .submit-btn i {
+            margin-right: 8px;
+        }
+        .confirmation, .notice {
             display: none;
-            text-align: center;
+            padding: 25px;
+            animation: fadeIn 0.5s;
+        }
+        .confirmation h2, .notice h2 {
+            color: #06C755;
+        }
+        #meeting-summary {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #06C755;
         }
         .confirm-btn {
             background-color: #06C755;
             color: white;
             border: none;
-            padding: 12px 20px;
-            border-radius: 4px;
+            padding: 14px 20px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 16px;
             font-weight: bold;
             margin-top: 20px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(6, 199, 85, 0.2);
         }
-        .notice {
-            display: none;
-            text-align: center;
+        .confirm-btn:hover {
+            background-color: #05a548;
+            transform: translateY(-2px);
+        }
+        .confirm-btn i {
+            margin-right: 8px;
         }
         .notice-btns {
             display: flex;
-            justify-content: space-around;
-            margin-top: 20px;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 25px;
         }
         .yes-btn, .no-btn {
-            background-color: #06C755;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 4px;
+            padding: 12px 25px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 16px;
             font-weight: bold;
-            width: 45%;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 120px;
+        }
+        .yes-btn {
+            background-color: #06C755;
+            color: white;
+            border: none;
+            box-shadow: 0 4px 6px rgba(6, 199, 85, 0.2);
+        }
+        .yes-btn:hover {
+            background-color: #05a548;
+            transform: translateY(-2px);
         }
         .no-btn {
-            background-color: #e0e0e0;
-            color: #333;
+            background-color: #f1f1f1;
+            color: #444;
+            border: 1px solid #ddd;
+        }
+        .no-btn:hover {
+            background-color: #e8e8e8;
+            transform: translateY(-2px);
+        }
+        .yes-btn i, .no-btn i {
+            margin-right: 8px;
         }
         /* 日付ピッカー用のスタイル */
         .date-time-picker {
-            width: 100%;
             cursor: pointer;
-        }
-        .calendar-icon {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #666;
-            pointer-events: none;
+            background-color: #fff;
+            padding-right: 40px;
         }
         .picker-container {
             position: relative;
+        }
+        .picker-container:after {
+            content: '\f133';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #06C755;
+            pointer-events: none;
+        }
+        /* フラットピッカーのカスタマイズ */
+        .flatpickr-calendar {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        }
+        .flatpickr-day.selected {
+            background: #06C755 !important;
+            border-color: #06C755 !important;
+        }
+        /* 必須項目の説明 */
+        .required-note {
+            margin-bottom: 20px;
+            font-size: 0.85rem;
+            color: #777;
+        }
+        .required-note span {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        /* アニメーション */
+        .animated {
+            animation-duration: 0.5s;
+            animation-fill-mode: both;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .slide-in {
+            animation-name: slideIn;
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="header">
+            <h1>サポートフォーム</h1>
+        </div>
+        
         <div class="tab-buttons">
-            <button class="tab-button active" id="support-btn">サポートミーティング</button>
-            <button class="tab-button" id="consultation-btn">お悩み相談</button>
+            <button class="tab-button active" id="support-btn"><i class="fas fa-calendar-check"></i> サポートミーティング</button>
+            <button class="tab-button" id="consultation-btn"><i class="fas fa-comments"></i> お悩み相談</button>
         </div>
 
         <!-- サポートミーティングフォーム -->
         <div class="form-section active" id="support-form">
-            <h2>【サポートミーティング希望】</h2>
-            <p>ご希望日時を入力してください（第3~第5希望まで入力してください）</p>
+            <h2>サポートミーティング希望</h2>
+            <p>ご希望の日時を選択してください</p>
+            
+            <div class="required-note">
+                <span>*</span> は必須項目です。第1〜第3希望は必ずご入力ください。
+            </div>
             
             <form id="meeting-form">
                 <div class="form-group">
-                    <label class="required" for="first-choice">第1希望：</label>
+                    <label class="required" for="first-choice">第1希望</label>
                     <div class="picker-container">
                         <input type="text" id="first-choice" class="date-time-picker" required placeholder="日付と時間を選択" readonly>
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <label class="required" for="second-choice">第2希望：</label>
+                    <label class="required" for="second-choice">第2希望</label>
                     <div class="picker-container">
                         <input type="text" id="second-choice" class="date-time-picker" required placeholder="日付と時間を選択" readonly>
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <label class="required" for="third-choice">第3希望：</label>
+                    <label class="required" for="third-choice">第3希望</label>
                     <div class="picker-container">
                         <input type="text" id="third-choice" class="date-time-picker" required placeholder="日付と時間を選択" readonly>
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="fourth-choice">第4希望：</label>
+                    <label for="fourth-choice">第4希望（任意）</label>
                     <div class="picker-container">
                         <input type="text" id="fourth-choice" class="date-time-picker" placeholder="日付と時間を選択" readonly>
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="fifth-choice">第5希望：</label>
+                    <label for="fifth-choice">第5希望（任意）</label>
                     <div class="picker-container">
                         <input type="text" id="fifth-choice" class="date-time-picker" placeholder="日付と時間を選択" readonly>
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="meeting-content">内容：</label>
-                    <textarea id="meeting-content"></textarea>
+                    <label for="meeting-content">内容（任意）</label>
+                    <textarea id="meeting-content" placeholder="ミーティングで相談したい内容をご記入ください"></textarea>
                 </div>
                 
-                <button type="submit" class="submit-btn">送信</button>
+                <button type="submit" class="submit-btn"><i class="fas fa-paper-plane"></i> 送信する</button>
             </form>
         </div>
 
         <!-- お悩み相談フォーム -->
         <div class="form-section" id="consultation-form">
-            <h2>【お悩み相談】</h2>
-            <p>内容をご記入ください</p>
+            <h2>お悩み相談</h2>
+            <p>お悩みの内容をご記入ください</p>
             
             <form id="consult-form">
                 <div class="form-group">
-                    <label for="consult-content">内容：</label>
-                    <textarea id="consult-content" required></textarea>
+                    <label class="required" for="consult-content">相談内容</label>
+                    <textarea id="consult-content" required placeholder="ご相談内容を詳しくお書きください"></textarea>
                 </div>
                 
-                <button type="submit" class="submit-btn">送信</button>
+                <button type="submit" class="submit-btn"><i class="fas fa-paper-plane"></i> 送信する</button>
             </form>
         </div>
 
         <!-- サポートミーティング確認画面 -->
         <div class="confirmation" id="meeting-confirmation">
-            <h2>確認画面</h2>
+            <h2><i class="fas fa-check-circle"></i> 確認画面</h2>
+            <p>以下の内容でよろしければ「送信する」ボタンを押してください。</p>
+            
             <div id="meeting-summary"></div>
-            <p>内容ご確認後担当者からご連絡させていただきます。</p>
-            <p>ご予約埋まっている場合はご希望に添えない場合もございますのでご認識の程よろしくお願いいたします。</p>
-            <button class="confirm-btn" id="meeting-confirm-btn">確認</button>
+            
+            <p>内容確認後、担当者からご連絡させていただきます。</p>
+            <p>予定が埋まっている場合はご希望に添えない場合もございますので、ご了承ください。</p>
+            
+            <div style="text-align: center;">
+                <button class="confirm-btn" id="meeting-confirm-btn"><i class="fas fa-check"></i> 送信する</button>
+            </div>
         </div>
 
         <!-- お悩み相談確認画面 -->
         <div class="notice" id="consult-notice">
-            <h2>【注意事項】</h2>
-            <p>お悩み相談は忙しくてサポートミーティングを受けられない方や、サポートミーティングの必要がない方向けのフォームになります。</p>
-            <p>お悩み相談をご依頼いただいた月はサポートミーティング及びお悩み相談を実施することができません。</p>
-            <p>ご依頼いただいてから内容によりますが、最低【4営業日】いただきます。</p>
-            <p>上記よろしければ【はい】を押してください。</p>
+            <h2><i class="fas fa-exclamation-circle"></i> 注意事項</h2>
+            <p>お悩み相談は下記の方向けのフォームです：</p>
+            <ul>
+                <li>サポートミーティングを受けられない方</li>
+                <li>サポートミーティングの必要がない方</li>
+            </ul>
+            <p><strong>重要：</strong> お悩み相談をご利用いただいた月は、サポートミーティングおよびお悩み相談は実施できません。</p>
+            <p>ご依頼内容によりますが、回答までに最低<strong>4営業日</strong>いただきます。</p>
+            <p>上記ご了承いただける場合は「はい」を押してください。</p>
             
             <div class="notice-btns">
-                <button class="yes-btn" id="yes-btn">はい</button>
-                <button class="no-btn" id="no-btn">いいえ</button>
+                <button class="yes-btn" id="yes-btn"><i class="fas fa-check"></i> はい</button>
+                <button class="no-btn" id="no-btn"><i class="fas fa-times"></i> いいえ</button>
             </div>
         </div>
     </div>
@@ -251,45 +411,54 @@
         document.addEventListener('DOMContentLoaded', function() {
             // LIFFの初期化
             try {
-                // 実際の使用時はコメントアウトを外し、LIFF IDを設定してください
                 liff.init({
-                    liffId: "2007077943-Qz5kL7mm" // LINE Developersコンソールで取得したID
+                    liffId: "2007077943-Qz5kL7mm"
                 })
                 .then(() => {
                     console.log("LIFF initialized!");
                 })
                 .catch((err) => {
                     console.error("LIFF initialization failed", err);
+                    alert("LINEの初期化に失敗しました。ページを再読み込みしてください。");
                 });
-                console.log("LIFF would initialize here in production");
             } catch (e) {
                 console.log("LIFF初期化エラー:", e);
             }
 
             // 日付時間ピッカーの初期化
             const dateTimeConfig = {
-                enableTime: true,        // 時間選択を有効化
-                dateFormat: "Y年m月d日 H:i", // 日時フォーマット
-                minDate: "today",        // 本日以降のみ選択可能
-                locale: "ja",            // 日本語化
-                time_24hr: true,         // 24時間表示
-                minuteIncrement: 30,     // 30分単位で選択
-                disableMobile: false     // モバイルでもカスタムUIを使用
+                enableTime: true,
+                dateFormat: "Y年m月d日 H:i",
+                minDate: "today",
+                locale: "ja",
+                time_24hr: true,
+                minuteIncrement: 30,
+                disableMobile: true,
+                allowInput: false,
+                static: true,
+                onOpen: function(selectedDates, dateStr, instance) {
+                    instance.calendarContainer.style.zIndex = 999;
+                }
             };
 
+            // 営業時間内のみ選択可能にする (9:00-18:00、土日除く)
+            dateTimeConfig.enable = [
+                function(date) {
+                    return date.getHours() >= 9 && date.getHours() < 18 && date.getDay() !== 0 && date.getDay() !== 6;
+                }
+            ];
+
             // 各日時選択フィールドにflatpickrを適用
-            flatpickr("#first-choice", dateTimeConfig);
-            flatpickr("#second-choice", dateTimeConfig);
-            flatpickr("#third-choice", dateTimeConfig);
-            flatpickr("#fourth-choice", dateTimeConfig);
-            flatpickr("#fifth-choice", dateTimeConfig);
+            const pickers = [
+                flatpickr("#first-choice", dateTimeConfig),
+                flatpickr("#second-choice", dateTimeConfig),
+                flatpickr("#third-choice", dateTimeConfig),
+                flatpickr("#fourth-choice", dateTimeConfig),
+                flatpickr("#fifth-choice", dateTimeConfig)
+            ];
 
             // LINEとの連携用
             function sendToLine(formData) {
-                // 実際の環境ではLIFF SDKを使用したメッセージ送信処理を実装
-                console.log("LINE送信データ:", formData);
-                
-                // 実際の環境では以下のようなコードが必要
                 liff.sendMessages([
                     {
                         type: 'text',
@@ -298,15 +467,29 @@
                 ])
                 .then(() => {
                     console.log("メッセージ送信成功");
-                    liff.closeWindow();
+                    // フォームリセット
+                    document.getElementById('meeting-form').reset();
+                    document.getElementById('consult-form').reset();
+                    
+                    // ピッカーもリセット
+                    pickers.forEach(picker => picker.clear());
+                    
+                    // 初期表示に戻す
+                    document.getElementById('meeting-confirmation').style.display = 'none';
+                    document.getElementById('consult-notice').style.display = 'none';
+                    document.getElementById('support-form').classList.add('active');
+                    
+                    alert("送信が完了しました。LINEに戻ります。");
+                    
+                    // LIFFウィンドウを閉じる
+                    setTimeout(() => {
+                        liff.closeWindow();
+                    }, 1000);
                 })
                 .catch((err) => {
                     console.error("メッセージ送信エラー", err);
-                    alert("メッセージの送信に失敗しました");
+                    alert("メッセージの送信に失敗しました: " + err.message);
                 });
-                
-                // デモ用：成功したふりをする
-                alert("LINEに内容を送信しました！");
             }
 
             // タブ切り替え処理
@@ -355,21 +538,21 @@
                 // 確認画面に内容を表示
                 let summaryHTML = `
                     <div style="text-align: left; margin: 20px 0;">
-                        <p><strong>第1希望:</strong> ${formData.firstChoice}</p>
-                        <p><strong>第2希望:</strong> ${formData.secondChoice}</p>
-                        <p><strong>第3希望:</strong> ${formData.thirdChoice}</p>
+                        <p><strong><i class="far fa-calendar-alt"></i> 第1希望:</strong> ${formData.firstChoice}</p>
+                        <p><strong><i class="far fa-calendar-alt"></i> 第2希望:</strong> ${formData.secondChoice}</p>
+                        <p><strong><i class="far fa-calendar-alt"></i> 第3希望:</strong> ${formData.thirdChoice}</p>
                 `;
                 
                 if (formData.fourthChoice) {
-                    summaryHTML += `<p><strong>第4希望:</strong> ${formData.fourthChoice}</p>`;
+                    summaryHTML += `<p><strong><i class="far fa-calendar-alt"></i> 第4希望:</strong> ${formData.fourthChoice}</p>`;
                 }
                 
                 if (formData.fifthChoice) {
-                    summaryHTML += `<p><strong>第5希望:</strong> ${formData.fifthChoice}</p>`;
+                    summaryHTML += `<p><strong><i class="far fa-calendar-alt"></i> 第5希望:</strong> ${formData.fifthChoice}</p>`;
                 }
                 
                 summaryHTML += `
-                        <p><strong>内容:</strong> ${formData.content || '(未入力)'}</p>
+                        <p><strong><i class="far fa-comment-dots"></i> 内容:</strong> ${formData.content || '(未入力)'}</p>
                     </div>
                 `;
                 
@@ -378,6 +561,8 @@
                 // 確認画面表示
                 document.getElementById('support-form').classList.remove('active');
                 document.getElementById('meeting-confirmation').style.display = 'block';
+                document.getElementById('meeting-confirmation').classList.add('animated');
+                document.getElementById('meeting-confirmation').classList.add('slide-in');
             });
 
             // サポートミーティング確認ボタン
@@ -402,13 +587,6 @@
                 message += `\n\n内容：${formData.content || '(未入力)'}`;
                 
                 sendToLine(message);
-                
-                // フォームリセット
-                document.getElementById('meeting-form').reset();
-                
-                // 初期表示に戻す
-                document.getElementById('meeting-confirmation').style.display = 'none';
-                document.getElementById('support-form').classList.add('active');
             });
 
             // お悩み相談フォーム送信処理
@@ -421,12 +599,20 @@
                     content: document.getElementById('consult-content').value
                 };
                 
+                // 内容が空でないか確認
+                if (!formData.content.trim()) {
+                    alert("相談内容を入力してください。");
+                    return;
+                }
+                
                 // ローカルストレージに一時保存
                 localStorage.setItem('formData', JSON.stringify(formData));
                 
                 // 確認画面表示
                 document.getElementById('consultation-form').classList.remove('active');
                 document.getElementById('consult-notice').style.display = 'block';
+                document.getElementById('consult-notice').classList.add('animated');
+                document.getElementById('consult-notice').classList.add('slide-in');
             });
 
             // お悩み相談「はい」ボタン
@@ -439,13 +625,6 @@
                     `\n内容：${formData.content}`;
                     
                 sendToLine(message);
-                
-                // フォームリセット
-                document.getElementById('consult-form').reset();
-                
-                // 初期表示に戻す
-                document.getElementById('consult-notice').style.display = 'none';
-                document.getElementById('consultation-form').classList.add('active');
             });
 
             // お悩み相談「いいえ」ボタン
