@@ -522,17 +522,23 @@
 
             // タブ切り替え処理
             document.getElementById('support-btn').addEventListener('click', function() {
+                // サポートミーティングタブをアクティブに
                 document.getElementById('support-btn').classList.add('active');
                 document.getElementById('consultation-btn').classList.remove('active');
+                
+                // フォームの表示切り替え
                 document.getElementById('support-form').classList.add('active');
+                document.getElementById('consult-notice').classList.remove('active');
                 document.getElementById('consultation-form').classList.remove('active');
-                document.getElementById('consult-notice').style.display = 'none';
                 document.getElementById('meeting-confirmation').style.display = 'none';
             });
 
             document.getElementById('consultation-btn').addEventListener('click', function() {
+                // 相談依頼タブをアクティブに
                 document.getElementById('consultation-btn').classList.add('active');
                 document.getElementById('support-btn').classList.remove('active');
+                
+                // フォームの表示切り替え - 注意事項を表示
                 document.getElementById('consult-notice').classList.add('active');
                 document.getElementById('support-form').classList.remove('active');
                 document.getElementById('consultation-form').classList.remove('active');
