@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+    // HTML のhead部分に追加
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>サポートフォーム</title>
@@ -215,26 +217,41 @@
 
     <script>
         // LINEとの連携用（LINESDKの初期化などが必要）
-        // 実際には公式LINE DevelopersからSDKを取得して初期化する必要があります
         function sendToLine(formData) {
-            // ここにLINE SDKを使用したメッセージ送信処理を実装
-            console.log("LINE送信データ:", formData);
-            // 実際の環境では以下のようなコードが必要（例）
-            /*
-            liff.sendMessages([
-                {
-                    type: 'text',
-                    text: formData
-                }
-            ])
-            .then(() => {
-                liff.closeWindow();
+            // script部分の最初に追加
+            document.addEventListener('DOMContentLoaded', function() {
+              // LIFF の初期化
+              liff.init({
+                liffId: "あなたのLIFF ID" // LINE Developersコンソールで取得したID
+              })
+              .then(() => {
+                console.log("LIFF initialized!");
+                // ここに初期化後の処理を書く
+              })
+              .catch((err) => {
+                console.error("LIFF initialization failed", err);
+              });
             });
-            */
             
-            // デモ用：成功したふりをする
-            alert("LINEに内容を送信しました！");
-            // LINEに戻る処理（実際にはLIFF SDKを使用）
+            // sendToLine関数を実際の実装に置き換え
+            function sendToLine(formData) {
+              // LIFF経由でLINEにメッセージを送信
+              liff.sendMessages([
+                {
+                  type: 'text',
+                  text: formData
+                }
+              ])
+              .then(() => {
+                // 送信成功時の処理
+                console.log("Message sent!");
+                liff.closeWindow(); // LIFF画面を閉じる
+              })
+              .catch((err) => {
+                // 送信失敗時の処理
+                console.error("Error sending message", err);
+              });
+            }
         }
 
         // タブ切り替え処理
