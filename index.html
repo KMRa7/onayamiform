@@ -4,11 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>サポートフォーム</title>
-    <!-- flatpickrのCSSとJavaScript -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/themes/material_blue.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/ja.min.js"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- LIFF SDK -->
@@ -111,7 +106,7 @@
             color: #e74c3c;
             font-weight: bold;
         }
-        input[type="text"], textarea {
+        input[type="text"], textarea, select {
             width: 100%;
             padding: 12px;
             border: 1px solid #ddd;
@@ -120,7 +115,16 @@
             transition: border 0.3s;
             font-size: 16px; /* 16px以上にしてiOSでのズームを防止 */
         }
-        input[type="text"]:focus, textarea:focus {
+        select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg fill='%2306C755' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 24px;
+        }
+        input[type="text"]:focus, textarea:focus, select:focus {
             border-color: #06C755;
             outline: none;
             box-shadow: 0 0 0 3px rgba(6, 199, 85, 0.1);
@@ -128,6 +132,15 @@
         textarea {
             height: 150px;
             resize: vertical;
+        }
+        .date-time-selects {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .date-select, .time-select {
+            flex: 1;
+            min-width: 120px;
         }
         .submit-btn {
             background-color: #06C755;
@@ -252,49 +265,6 @@
             color: #444;
             border: 1px solid #ddd;
         }
-        /* 日付ピッカー用のスタイル */
-        .date-time-picker {
-            cursor: pointer;
-            background-color: #fff;
-            padding-right: 40px;
-            -webkit-appearance: none; /* iOS用のスタイル調整 */
-            -moz-appearance: none;
-            appearance: none;
-        }
-        .picker-container {
-            position: relative;
-        }
-        .picker-container:after {
-            content: '\f133';
-            font-family: 'Font Awesome 6 Free';
-            font-weight: 900;
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #06C755;
-            pointer-events: none;
-        }
-        /* フラットピッカーのカスタマイズ */
-        .flatpickr-calendar {
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
-            width: 310px !important; /* カレンダーの幅を固定 */
-        }
-        .flatpickr-day.selected {
-            background: #06C755 !important;
-            border-color: #06C755 !important;
-        }
-        /* モバイル用のカレンダースタイル */
-        .flatpickr-calendar.open {
-            display: inline-block !important;
-            z-index: 99999 !important;
-        }
-        .flatpickr-calendar.arrowTop:before,
-        .flatpickr-calendar.arrowTop:after {
-            display: none !important; /* 矢印を非表示 */
-        }
         /* 必須項目の説明 */
         .required-note {
             margin-bottom: 20px;
@@ -337,25 +307,16 @@
                 flex: 1;
                 overflow-y: auto;
             }
-            /* モバイルでのflatpickrカレンダーのサイズと位置調整 */
-            .flatpickr-calendar {
-                width: 100% !important;
-                max-width: 320px !important;
-                position: fixed !important;
-                top: 50% !important;
-                left: 50% !important;
-                transform: translate(-50%, -50%) !important;
-                margin: 0 !important;
-            }
-            .flatpickr-rContainer {
-                width: 100% !important;
-            }
-            .flatpickr-months, .flatpickr-weekdays, .flatpickr-days {
-                width: 100% !important;
-            }
             /* モバイルでのフォーム入力スタイル調整 */
-            input[type="text"], textarea {
+            input[type="text"], textarea, select {
                 font-size: 16px;
+            }
+            .date-time-selects {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .date-select, .time-select {
+                width: 100%;
             }
         }
      </style>
@@ -383,36 +344,251 @@
             <form id="meeting-form">
                 <div class="form-group">
                     <label class="required" for="first-choice">第1希望</label>
-                    <div class="picker-container">
-                        <input type="text" id="first-choice" class="date-time-picker" required placeholder="日付と時間を選択" readonly>
+                    <div class="date-time-selects">
+                        <div class="date-select">
+                            <select id="first-choice-month" required>
+                                <option value="">月を選択</option>
+                                <option value="1">1月</option>
+                                <option value="2">2月</option>
+                                <option value="3">3月</option>
+                                <option value="4">4月</option>
+                                <option value="5">5月</option>
+                                <option value="6">6月</option>
+                                <option value="7">7月</option>
+                                <option value="8">8月</option>
+                                <option value="9">9月</option>
+                                <option value="10">10月</option>
+                                <option value="11">11月</option>
+                                <option value="12">12月</option>
+                            </select>
+                        </div>
+                        <div class="date-select">
+                            <select id="first-choice-day" required>
+                                <option value="">日を選択</option>
+                                <!-- JSで動的に生成 -->
+                            </select>
+                        </div>
+                        <div class="time-select">
+                            <select id="first-choice-hour" required>
+                                <option value="">時間を選択</option>
+                                <option value="9">9時</option>
+                                <option value="10">10時</option>
+                                <option value="11">11時</option>
+                                <option value="12">12時</option>
+                                <option value="13">13時</option>
+                                <option value="14">14時</option>
+                                <option value="15">15時</option>
+                                <option value="16">16時</option>
+                                <option value="17">17時</option>
+                            </select>
+                        </div>
+                        <div class="time-select">
+                            <select id="first-choice-minute" required>
+                                <option value="">分を選択</option>
+                                <option value="00">00分</option>
+                                <option value="30">30分</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 
                 <div class="form-group">
                     <label class="required" for="second-choice">第2希望</label>
-                    <div class="picker-container">
-                        <input type="text" id="second-choice" class="date-time-picker" required placeholder="日付と時間を選択" readonly>
+                    <div class="date-time-selects">
+                        <div class="date-select">
+                            <select id="second-choice-month" required>
+                                <option value="">月を選択</option>
+                                <option value="1">1月</option>
+                                <option value="2">2月</option>
+                                <option value="3">3月</option>
+                                <option value="4">4月</option>
+                                <option value="5">5月</option>
+                                <option value="6">6月</option>
+                                <option value="7">7月</option>
+                                <option value="8">8月</option>
+                                <option value="9">9月</option>
+                                <option value="10">10月</option>
+                                <option value="11">11月</option>
+                                <option value="12">12月</option>
+                            </select>
+                        </div>
+                        <div class="date-select">
+                            <select id="second-choice-day" required>
+                                <option value="">日を選択</option>
+                                <!-- JSで動的に生成 -->
+                            </select>
+                        </div>
+                        <div class="time-select">
+                            <select id="second-choice-hour" required>
+                                <option value="">時間を選択</option>
+                                <option value="9">9時</option>
+                                <option value="10">10時</option>
+                                <option value="11">11時</option>
+                                <option value="12">12時</option>
+                                <option value="13">13時</option>
+                                <option value="14">14時</option>
+                                <option value="15">15時</option>
+                                <option value="16">16時</option>
+                                <option value="17">17時</option>
+                            </select>
+                        </div>
+                        <div class="time-select">
+                            <select id="second-choice-minute" required>
+                                <option value="">分を選択</option>
+                                <option value="00">00分</option>
+                                <option value="30">30分</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 
                 <div class="form-group">
                     <label class="required" for="third-choice">第3希望</label>
-                    <div class="picker-container">
-                        <input type="text" id="third-choice" class="date-time-picker" required placeholder="日付と時間を選択" readonly>
+                    <div class="date-time-selects">
+                        <div class="date-select">
+                            <select id="third-choice-month" required>
+                                <option value="">月を選択</option>
+                                <option value="1">1月</option>
+                                <option value="2">2月</option>
+                                <option value="3">3月</option>
+                                <option value="4">4月</option>
+                                <option value="5">5月</option>
+                                <option value="6">6月</option>
+                                <option value="7">7月</option>
+                                <option value="8">8月</option>
+                                <option value="9">9月</option>
+                                <option value="10">10月</option>
+                                <option value="11">11月</option>
+                                <option value="12">12月</option>
+                            </select>
+                        </div>
+                        <div class="date-select">
+                            <select id="third-choice-day" required>
+                                <option value="">日を選択</option>
+                                <!-- JSで動的に生成 -->
+                            </select>
+                        </div>
+                        <div class="time-select">
+                            <select id="third-choice-hour" required>
+                                <option value="">時間を選択</option>
+                                <option value="9">9時</option>
+                                <option value="10">10時</option>
+                                <option value="11">11時</option>
+                                <option value="12">12時</option>
+                                <option value="13">13時</option>
+                                <option value="14">14時</option>
+                                <option value="15">15時</option>
+                                <option value="16">16時</option>
+                                <option value="17">17時</option>
+                            </select>
+                        </div>
+                        <div class="time-select">
+                            <select id="third-choice-minute" required>
+                                <option value="">分を選択</option>
+                                <option value="00">00分</option>
+                                <option value="30">30分</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 
                 <div class="form-group">
                     <label for="fourth-choice">第4希望（任意）</label>
-                    <div class="picker-container">
-                        <input type="text" id="fourth-choice" class="date-time-picker" placeholder="日付と時間を選択" readonly>
+                    <div class="date-time-selects">
+                        <div class="date-select">
+                            <select id="fourth-choice-month">
+                                <option value="">月を選択</option>
+                                <option value="1">1月</option>
+                                <option value="2">2月</option>
+                                <option value="3">3月</option>
+                                <option value="4">4月</option>
+                                <option value="5">5月</option>
+                                <option value="6">6月</option>
+                                <option value="7">7月</option>
+                                <option value="8">8月</option>
+                                <option value="9">9月</option>
+                                <option value="10">10月</option>
+                                <option value="11">11月</option>
+                                <option value="12">12月</option>
+                            </select>
+                        </div>
+                        <div class="date-select">
+                            <select id="fourth-choice-day">
+                                <option value="">日を選択</option>
+                                <!-- JSで動的に生成 -->
+                            </select>
+                        </div>
+                        <div class="time-select">
+                            <select id="fourth-choice-hour">
+                                <option value="">時間を選択</option>
+                                <option value="9">9時</option>
+                                <option value="10">10時</option>
+                                <option value="11">11時</option>
+                                <option value="12">12時</option>
+                                <option value="13">13時</option>
+                                <option value="14">14時</option>
+                                <option value="15">15時</option>
+                                <option value="16">16時</option>
+                                <option value="17">17時</option>
+                            </select>
+                        </div>
+                        <div class="time-select">
+                            <select id="fourth-choice-minute">
+                                <option value="">分を選択</option>
+                                <option value="00">00分</option>
+                                <option value="30">30分</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 
                 <div class="form-group">
                     <label for="fifth-choice">第5希望（任意）</label>
-                    <div class="picker-container">
-                        <input type="text" id="fifth-choice" class="date-time-picker" placeholder="日付と時間を選択" readonly>
+                    <div class="date-time-selects">
+                        <div class="date-select">
+                            <select id="fifth-choice-month">
+                                <option value="">月を選択</option>
+                                <option value="1">1月</option>
+                                <option value="2">2月</option>
+                                <option value="3">3月</option>
+                                <option value="4">4月</option>
+                                <option value="5">5月</option>
+                                <option value="6">6月</option>
+                                <option value="7">7月</option>
+                                <option value="8">8月</option>
+                                <option value="9">9月</option>
+                                <option value="10">10月</option>
+                                <option value="11">11月</option>
+                                <option value="12">12月</option>
+                            </select>
+                        </div>
+                        <div class="date-select">
+                            <select id="fifth-choice-day">
+                                <option value="">日を選択</option>
+                                <!-- JSで動的に生成 -->
+                            </select>
+                        </div>
+                        <div class="time-select">
+                            <select id="fifth-choice-hour">
+                                <option value="">時間を選択</option>
+                                <option value="9">9時</option>
+                                <option value="10">10時</option>
+                                <option value="11">11時</option>
+                                <option value="12">12時</option>
+                                <option value="13">13時</option>
+                                <option value="14">14時</option>
+                                <option value="15">15時</option>
+                                <option value="16">16時</option>
+                                <option value="17">17時</option>
+                            </select>
+                        </div>
+                        <div class="time-select">
+                            <select id="fifth-choice-minute">
+                                <option value="">分を選択</option>
+                                <option value="00">00分</option>
+                                <option value="30">30分</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 
@@ -477,17 +653,10 @@
     </div>
 
     <script>
-document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function() {
     // タブの状態を保存する変数
     let currentTab = 'support'; // デフォルトはサポートミーティング
     let consultationState = 'notice'; // 相談依頼の初期状態は注意事項
-    // flatpickrインスタンスを格納する配列
-    let pickers = [];
-    
-    // オーバーレイ要素
-    let overlay = document.createElement('div');
-    overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9998; display: none;';
-    document.body.appendChild(overlay);
 
     // LIFFの初期化
     try {
@@ -505,110 +674,151 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("LIFF初期化エラー:", e);
     }
 
-    // 全てのflatpickrインスタンスを閉じる関数
-    function closeAllDatepickers() {
-        pickers.forEach(picker => {
-            if (picker && picker.isOpen) {
-                picker.close();
-            }
+    // 月の変更イベントハンドラを設定する関数
+    function setupMonthChangeHandlers() {
+        const choiceIds = ['first', 'second', 'third', 'fourth', 'fifth'];
+        
+        choiceIds.forEach(id => {
+            const monthSelect = document.getElementById(`${id}-choice-month`);
+            const daySelect = document.getElementById(`${id}-choice-day`);
+            
+            monthSelect.addEventListener('change', function() {
+                updateDays(monthSelect.value, daySelect);
+            });
         });
-        overlay.style.display = 'none';
     }
 
-    // 日付時間ピッカーの初期化
-    const dateTimeConfig = {
-        enableTime: true,
-        dateFormat: "Y年m月d日 H:i",
-        minDate: "today",
-        locale: "ja",
-        time_24hr: true,
-        minuteIncrement: 30,
-        disableMobile: true, // "true" 文字列ではなく真偽値trueに修正
-        allowInput: false,
-        static: true,
-        onOpen: function(selectedDates, dateStr, instance) {
-            // 他のデートピッカーを閉じる
-            closeAllDatepickers();
-            
-            // オーバーレイを表示
-            overlay.style.display = 'block';
-            
-            // カレンダーのポジショニング修正
-            if (window.innerWidth <= 480) {
-                setTimeout(() => {
-                    const calendar = instance.calendarContainer;
-                    if (calendar) {
-                        calendar.style.position = 'fixed';
-                        calendar.style.top = '50%';
-                        calendar.style.left = '50%';
-                        calendar.style.transform = 'translate(-50%, -50%)';
-                        calendar.style.zIndex = '99999';
-                        calendar.style.width = '300px';
-                    }
-                }, 10);
-            }
-        },
-        onClose: function() {
-            // オーバーレイを非表示
-            overlay.style.display = 'none';
+    // 日数を更新する関数
+    function updateDays(month, daySelect) {
+        if (!month) {
+            // 月が選択されていない場合は日を空にする
+            daySelect.innerHTML = '<option value="">日を選択</option>';
+            return;
         }
-    };
-    
-    // 時間範囲の制限（9:30-17:00）
-    dateTimeConfig.minTime = "09:30";
-    dateTimeConfig.maxTime = "17:00";
-    
-    // 土日を無効化
-    dateTimeConfig.disable = [
-        function(date) {
-            // 日曜(0)または土曜(6)の場合は選択不可
-            return date.getDay() === 0 || date.getDay() === 6;
+        
+        // 現在の年を取得（今回は年を表示しないが、日数計算のために必要）
+        const currentYear = new Date().getFullYear();
+        
+        // 選択された月の最終日を取得
+        const lastDay = new Date(currentYear, month, 0).getDate();
+        
+        // 日の選択肢を生成
+        let options = '<option value="">日を選択</option>';
+        for (let i = 1; i <= lastDay; i++) {
+            options += `<option value="${i}">${i}日</option>`;
         }
-    ];
-    
-    // 各日時選択フィールドにflatpickrを適用
-    const dateInputs = document.querySelectorAll('.date-time-picker');
-    dateInputs.forEach(input => {
-        // 特定のモバイルブラウザでの問題回避のため、input要素にreadonly属性を追加
-        input.setAttribute('readonly', 'readonly');
         
-        // 入力フィールドのデフォルトのタッチ動作を防止
-        input.addEventListener('touchstart', function(e) {
-            e.preventDefault();
-        }, { passive: false });
-        
-        input.addEventListener('focus', function(e) {
-            e.preventDefault();
-            // 明示的にflatpickrを開く
-            if (this._flatpickr && !this._flatpickr.isOpen) {
-                this._flatpickr.open();
-            }
-        });
-        
-        // 実際のflatpickrインスタンス作成
-        const fp = flatpickr(input, dateTimeConfig);
-        // inputに_flatpickrプロパティとして保存
-        input._flatpickr = fp;
-        pickers.push(fp);
-        
-        // クリックイベントリスナーを追加
-        input.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // すでに開いている場合は何もしない
-            if (this._flatpickr && !this._flatpickr.isOpen) {
-                // 他のデートピッカーを閉じてから開く
-                closeAllDatepickers();
-                this._flatpickr.open();
-            }
-        });
-    });
+        daySelect.innerHTML = options;
+    }
 
-    // オーバーレイクリックでカレンダーを閉じる
-    overlay.addEventListener('click', function() {
-        closeAllDatepickers();
-    });
+    // LINEとの連携用
+    function sendToLine(formData) {
+        try {
+            liff.sendMessages([
+                {
+                    type: 'text',
+                    text: formData
+                }
+            ])
+            .then(() => {
+                console.log("メッセージ送信成功");
+                // フォームリセット
+                document.getElementById('meeting-form').reset();
+                document.getElementById('consult-form').reset();
+                
+                // 初期表示に戻す
+                document.getElementById('meeting-confirmation').style.display = 'none';
+                document.getElementById('support-form').classList.add('active');
+                document.getElementById('consult-notice').style.display = 'none';
+                document.getElementById('consultation-form').style.display = 'none';
+                
+                // タブとステートをリセット
+                current
+
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // タブの状態を保存する変数
+    let currentTab = 'support'; // デフォルトはサポートミーティング
+    let consultationState = 'notice'; // 相談依頼の初期状態は注意事項
+
+    // LIFFの初期化
+    try {
+        liff.init({
+            liffId: "2007077943-Qz5kL7mm"
+        })
+        .then(() => {
+            console.log("LIFF initialized!");
+        })
+        .catch((err) => {
+            console.error("LIFF initialization failed", err);
+            alert("LINEの初期化に失敗しました。ページを再読み込みしてください。");
+        });
+    } catch (e) {
+        console.log("LIFF初期化エラー:", e);
+    }
+
+    // 月の変更イベントハンドラを設定
+    setupMonthChangeHandlers();
+    
+    // 初期日付選択肢の設定
+    initializeAllDateSelectors();
+
+    // 月の変更イベントハンドラを設定する関数
+    function setupMonthChangeHandlers() {
+        const choiceIds = ['first', 'second', 'third', 'fourth', 'fifth'];
+        
+        choiceIds.forEach(id => {
+            const monthSelect = document.getElementById(`${id}-choice-month`);
+            const daySelect = document.getElementById(`${id}-choice-day`);
+            
+            monthSelect.addEventListener('change', function() {
+                updateDays(monthSelect.value, daySelect);
+            });
+        });
+    }
+
+    // 日数を更新する関数
+    function updateDays(month, daySelect) {
+        if (!month) {
+            // 月が選択されていない場合は日を空にする
+            daySelect.innerHTML = '<option value="">日を選択</option>';
+            return;
+        }
+        
+        // 現在の年を取得
+        const currentYear = new Date().getFullYear();
+        
+        // 選択された月の最終日を取得
+        const lastDay = new Date(currentYear, month, 0).getDate();
+        
+        // 日の選択肢を生成
+        let options = '<option value="">日を選択</option>';
+        for (let i = 1; i <= lastDay; i++) {
+            options += `<option value="${i}">${i}日</option>`;
+        }
+        
+        daySelect.innerHTML = options;
+    }
+
+    // すべての日付セレクタを初期化する関数
+    function initializeAllDateSelectors() {
+        const choiceIds = ['first', 'second', 'third', 'fourth', 'fifth'];
+        
+        choiceIds.forEach(id => {
+            const monthSelect = document.getElementById(`${id}-choice-month`);
+            const daySelect = document.getElementById(`${id}-choice-day`);
+            
+            // 現在の月を取得してセット
+            const currentMonth = new Date().getMonth() + 1; // JavaScriptの月は0始まり
+            
+            // 現在の月をデフォルト選択（任意）
+            if (monthSelect.querySelector(`option[value="${currentMonth}"]`)) {
+                monthSelect.value = currentMonth;
+                // 対応する日数を更新
+                updateDays(currentMonth, daySelect);
+            }
+        });
+    }
 
     // LINEとの連携用
     function sendToLine(formData) {
@@ -658,9 +868,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('consult-notice').classList.remove('active');
         document.getElementById('consultation-form').classList.remove('active');
         document.getElementById('meeting-confirmation').style.display = 'none';
-        
-        // すべてのデートピッカーを閉じる
-        closeAllDatepickers();
     }
 
     // タブ切り替え処理
@@ -704,17 +911,25 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('meeting-form').addEventListener('submit', function(e) {
         e.preventDefault();
         
-        // すべてのデートピッカーを閉じる
-        closeAllDatepickers();
-        
         // フォームデータの取得
+        const getDateTimeString = function(prefix) {
+            const month = document.getElementById(`${prefix}-choice-month`).value;
+            const day = document.getElementById(`${prefix}-choice-day`).value;
+            const hour = document.getElementById(`${prefix}-choice-hour`).value;
+            const minute = document.getElementById(`${prefix}-choice-minute`).value;
+            
+            if (!month || !day || !hour || !minute) return '';
+            
+            return `${month}月${day}日 ${hour}:${minute}`;
+        };
+        
         const formData = {
             type: 'サポートミーティング',
-            firstChoice: document.getElementById('first-choice').value,
-            secondChoice: document.getElementById('second-choice').value,
-            thirdChoice: document.getElementById('third-choice').value,
-            fourthChoice: document.getElementById('fourth-choice').value,
-            fifthChoice: document.getElementById('fifth-choice').value,
+            firstChoice: getDateTimeString('first'),
+            secondChoice: getDateTimeString('second'),
+            thirdChoice: getDateTimeString('third'),
+            fourthChoice: getDateTimeString('fourth'),
+            fifthChoice: getDateTimeString('fifth'),
             content: document.getElementById('meeting-content').value
         };
         
@@ -758,13 +973,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // 確認ボタンクリック
     document.getElementById('meeting-confirm-btn').addEventListener('click', function() {
         // フォームデータを文字列化
+        const getDateTimeString = function(prefix) {
+            const month = document.getElementById(`${prefix}-choice-month`).value;
+            const day = document.getElementById(`${prefix}-choice-day`).value;
+            const hour = document.getElementById(`${prefix}-choice-hour`).value;
+            const minute = document.getElementById(`${prefix}-choice-minute`).value;
+            
+            if (!month || !day || !hour || !minute) return '';
+            
+            return `${month}月${day}日 ${hour}:${minute}`;
+        };
+        
         const formData = {
             type: 'サポートミーティング',
-            firstChoice: document.getElementById('first-choice').value,
-            secondChoice: document.getElementById('second-choice').value,
-            thirdChoice: document.getElementById('third-choice').value,
-            fourthChoice: document.getElementById('fourth-choice').value || "指定なし",
-            fifthChoice: document.getElementById('fifth-choice').value || "指定なし",
+            firstChoice: getDateTimeString('first'),
+            secondChoice: getDateTimeString('second'),
+            thirdChoice: getDateTimeString('third'),
+            fourthChoice: getDateTimeString('fourth') || "指定なし",
+            fifthChoice: getDateTimeString('fifth') || "指定なし",
             content: document.getElementById('meeting-content').value || "記入なし"
         };
         
@@ -840,7 +1066,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // 入力フィールドのフォントサイズを16px以上に設定（iOS自動ズーム防止）
-            const inputs = document.querySelectorAll('input[type="text"], textarea');
+            const inputs = document.querySelectorAll('input[type="text"], textarea, select');
             inputs.forEach(input => {
                 input.style.fontSize = '16px';
             });
