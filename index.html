@@ -477,7 +477,7 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {
     // タブの状態を保存する変数
     let currentTab = 'support'; // デフォルトはサポートミーティング
     let consultationState = 'notice'; // 相談依頼の初期状態は注意事項
@@ -523,7 +523,7 @@
         locale: "ja",
         time_24hr: true,
         minuteIncrement: 30,
-        disableMobile: "true", // モバイルのネイティブピッカーを無効化
+        disableMobile: true, // "true" 文字列ではなく真偽値trueに修正
         allowInput: false,
         static: true,
         onOpen: function(selectedDates, dateStr, instance) {
@@ -537,12 +537,14 @@
             if (window.innerWidth <= 480) {
                 setTimeout(() => {
                     const calendar = instance.calendarContainer;
-                    calendar.style.position = 'fixed';
-                    calendar.style.top = '50%';
-                    calendar.style.left = '50%';
-                    calendar.style.transform = 'translate(-50%, -50%)';
-                    calendar.style.zIndex = '99999';
-                    calendar.style.width = '300px';
+                    if (calendar) {
+                        calendar.style.position = 'fixed';
+                        calendar.style.top = '50%';
+                        calendar.style.left = '50%';
+                        calendar.style.transform = 'translate(-50%, -50%)';
+                        calendar.style.zIndex = '99999';
+                        calendar.style.width = '300px';
+                    }
                 }, 10);
             }
         },
@@ -567,14 +569,26 @@
     // 各日時選択フィールドにflatpickrを適用
     const dateInputs = document.querySelectorAll('.date-time-picker');
     dateInputs.forEach(input => {
+        // 特定のモバイルブラウザでの問題回避のため、input要素にreadonly属性を追加
+        input.setAttribute('readonly', 'readonly');
+        
         // 入力フィールドのデフォルトのタッチ動作を防止
+        input.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+        
         input.addEventListener('focus', function(e) {
             e.preventDefault();
-            this.blur();
+            // 明示的にflatpickrを開く
+            if (this._flatpickr && !this._flatpickr.isOpen) {
+                this._flatpickr.open();
+            }
         });
         
         // 実際のflatpickrインスタンス作成
         const fp = flatpickr(input, dateTimeConfig);
+        // inputに_flatpickrプロパティとして保存
+        input._flatpickr = fp;
         pickers.push(fp);
         
         // クリックイベントリスナーを追加
@@ -583,10 +597,10 @@
             e.stopPropagation();
             
             // すでに開いている場合は何もしない
-            if (!fp.isOpen) {
+            if (this._flatpickr && !this._flatpickr.isOpen) {
                 // 他のデートピッカーを閉じてから開く
                 closeAllDatepickers();
-                fp.open();
+                this._flatpickr.open();
             }
         });
     });
