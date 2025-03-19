@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>サポートフォーム</title>
     <!-- flatpickrのCSSとJavaScript -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
@@ -21,6 +21,7 @@
             background-color: #f8f9fa;
             color: #333;
             line-height: 1.6;
+            -webkit-text-size-adjust: 100%; /* iOS用のテキストサイズ自動調整を防止 */
         }
         .container {
             max-width: 600px;
@@ -117,7 +118,7 @@
             border-radius: 8px;
             box-sizing: border-box;
             transition: border 0.3s;
-            font-size: 16px;
+            font-size: 16px; /* 16px以上にしてiOSでのズームを防止 */
         }
         input[type="text"]:focus, textarea:focus {
             border-color: #06C755;
@@ -256,6 +257,9 @@
             cursor: pointer;
             background-color: #fff;
             padding-right: 40px;
+            -webkit-appearance: none; /* iOS用のスタイル調整 */
+            -moz-appearance: none;
+            appearance: none;
         }
         .picker-container {
             position: relative;
@@ -276,11 +280,20 @@
             border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0,0,0,0.15);
-            z-index: 9999 !important;
+            width: 310px !important; /* カレンダーの幅を固定 */
         }
         .flatpickr-day.selected {
             background: #06C755 !important;
             border-color: #06C755 !important;
+        }
+        /* モバイル用のカレンダースタイル */
+        .flatpickr-calendar.open {
+            display: inline-block !important;
+            z-index: 99999 !important;
+        }
+        .flatpickr-calendar.arrowTop:before,
+        .flatpickr-calendar.arrowTop:after {
+            display: none !important; /* 矢印を非表示 */
         }
         /* 必須項目の説明 */
         .required-note {
@@ -327,15 +340,25 @@
             /* モバイルでのflatpickrカレンダーのサイズと位置調整 */
             .flatpickr-calendar {
                 width: 100% !important;
-                max-width: 350px;
+                max-width: 320px !important;
+                position: fixed !important;
+                top: 50% !important;
                 left: 50% !important;
-                transform: translateX(-50%);
+                transform: translate(-50%, -50%) !important;
+                margin: 0 !important;
+            }
+            .flatpickr-rContainer {
+                width: 100% !important;
             }
             .flatpickr-months, .flatpickr-weekdays, .flatpickr-days {
                 width: 100% !important;
             }
+            /* モバイルでのフォーム入力スタイル調整 */
+            input[type="text"], textarea {
+                font-size: 16px;
+            }
         }
-    </style>
+     </style>
 </head>
 <body>
     <div class="container">
@@ -455,336 +478,367 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // タブの状態を保存する変数
-            let currentTab = 'support'; // デフォルトはサポートミーティング
-            let consultationState = 'notice'; // 相談依頼の初期状態は注意事項
-            // flatpickrインスタンスを格納する配列
-            let pickers = [];
+    // タブの状態を保存する変数
+    let currentTab = 'support'; // デフォルトはサポートミーティング
+    let consultationState = 'notice'; // 相談依頼の初期状態は注意事項
+    // flatpickrインスタンスを格納する配列
+    let pickers = [];
+    
+    // オーバーレイ要素
+    let overlay = document.createElement('div');
+    overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9998; display: none;';
+    document.body.appendChild(overlay);
 
-            // LIFFの初期化
-            try {
-                liff.init({
-                    liffId: "2007077943-Qz5kL7mm"
-                })
-                .then(() => {
-                    console.log("LIFF initialized!");
-                })
-                .catch((err) => {
-                    console.error("LIFF initialization failed", err);
-                    alert("LINEの初期化に失敗しました。ページを再読み込みしてください。");
-                });
-            } catch (e) {
-                console.log("LIFF初期化エラー:", e);
-            }
-
-            // 全てのflatpickrインスタンスを閉じる関数
-            function closeAllDatepickers() {
-                pickers.forEach(picker => {
-                    if (picker && picker.isOpen) {
-                        picker.close();
-                    }
-                });
-            }
-
-            // 日付時間ピッカーの初期化
-            const dateTimeConfig = {
-                enableTime: true,
-                dateFormat: "Y年m月d日 H:i",
-                minDate: "today",
-                locale: "ja",
-                time_24hr: true,
-                minuteIncrement: 30,
-                disableMobile: true,
-                allowInput: false,
-                static: true,
-                position: "auto",
-                positionElement: null,
-                onOpen: function(selectedDates, dateStr, instance) {
-                    // 他のデートピッカーを閉じる
-                    closeAllDatepickers();
-                    
-                    // モバイル用の位置調整
-                    if (window.innerWidth <= 480) {
-                        const inputRect = instance.element.getBoundingClientRect();
-                        const windowHeight = window.innerHeight;
-                        
-                        // インプット要素が画面の上半分にある場合はその下に表示
-                        // 下半分にある場合はその上に表示
-                        if (inputRect.top < windowHeight / 2) {
-                            instance.calendarContainer.style.top = (inputRect.bottom + window.scrollY) + 'px';
-                        } else {
-                            const calendarHeight = instance.calendarContainer.offsetHeight || 300;
-                            instance.calendarContainer.style.top = ((inputRect.top + window.scrollY) - calendarHeight) + 'px';
-                        }
-                        
-                        // 左右の位置調整（中央寄せ）
-                        instance.calendarContainer.style.left = '50%';
-                        instance.calendarContainer.style.transform = 'translateX(-50%)';
-                        instance.calendarContainer.style.right = 'auto';
-                    }
-                    
-                    // z-indexを高く設定
-                    instance.calendarContainer.style.zIndex = 999999;
-                },
-                onClose: function(selectedDates, dateStr, instance) {
-                    // 閉じるときのアニメーション
-                    instance.calendarContainer.style.opacity = 0;
-                    setTimeout(() => {
-                        instance.calendarContainer.style.opacity = 1;
-                    }, 300);
-                }
-            };
-            
-            // 時間範囲の制限（9:30-17:00）
-            dateTimeConfig.minTime = "09:30";
-            dateTimeConfig.maxTime = "17:00";
-            
-            // 土日を無効化
-            dateTimeConfig.disable = [
-                function(date) {
-                    // 日曜(0)または土曜(6)の場合は選択不可
-                    return date.getDay() === 0 || date.getDay() === 6;
-                }
-            ];
-            
-            // 各日時選択フィールドにflatpickrを適用し、インスタンスを保存
-            const dateInputs = document.querySelectorAll('.date-time-picker');
-            dateInputs.forEach(input => {
-                const fp = flatpickr(input, dateTimeConfig);
-                pickers.push(fp);
-                
-                // クリックイベントリスナーを追加（スマホ対応）
-                input.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    // すでに開いている場合は何もしない
-                    if (!fp.isOpen) {
-                        // 他のデートピッカーを閉じてから開く
-                        closeAllDatepickers();
-                        fp.open();
-                    }
-                });
-            });
-
-            // bodyにクリックイベントを追加して、カレンダー外をクリックしたときに閉じるようにする
-            document.body.addEventListener('click', function(e) {
-                // カレンダー内や日付入力欄のクリックでなければ
-                const isCalendarClick = e.target.closest('.flatpickr-calendar');
-                const isInputClick = e.target.closest('.date-time-picker');
-                
-                if (!isCalendarClick && !isInputClick) {
-                    closeAllDatepickers();
-                }
-            });
-
-            // LINEとの連携用
-            function sendToLine(formData) {
-                try {
-                    liff.sendMessages([
-                        {
-                            type: 'text',
-                            text: formData
-                        }
-                    ])
-                    .then(() => {
-                        console.log("メッセージ送信成功");
-                        // フォームリセット
-                        document.getElementById('meeting-form').reset();
-                        document.getElementById('consult-form').reset();
-                        
-                        // 初期表示に戻す
-                        document.getElementById('meeting-confirmation').style.display = 'none';
-                        document.getElementById('support-form').classList.add('active');
-                        document.getElementById('consult-notice').style.display = 'none';
-                        document.getElementById('consultation-form').style.display = 'none';
-                        
-                        // タブとステートをリセット
-                        currentTab = 'support';
-                        consultationState = 'notice';
-                        
-                        alert("送信が完了しました。LINEに戻ります。");
-                        
-                        // LIFFウィンドウを閉じる
-                        setTimeout(() => {
-                            liff.closeWindow();
-                        }, 1000);
-                    })
-                    .catch((err) => {
-                        console.error("メッセージ送信エラー", err);
-                        alert("メッセージの送信に失敗しました: " + err.message);
-                    });
-                } catch (e) {
-                    console.error("LINE連携エラー:", e);
-                    alert("LINE連携エラー: " + e.message);
-                }
-            }
-
-            // 全てのフォームセクションを非表示にする関数
-            function hideAllFormSections() {
-                document.getElementById('support-form').classList.remove('active');
-                document.getElementById('consult-notice').classList.remove('active');
-                document.getElementById('consultation-form').classList.remove('active');
-                document.getElementById('meeting-confirmation').style.display = 'none';
-                
-                // すべてのデートピッカーを閉じる
-                closeAllDatepickers();
-            }
-
-            // タブ切り替え処理
-            document.getElementById('support-btn').addEventListener('click', function() {
-                if (currentTab === 'support') return; // すでにアクティブなら何もしない
-                
-                // サポートミーティングタブをアクティブに
-                document.getElementById('support-btn').classList.add('active');
-                document.getElementById('consultation-btn').classList.remove('active');
-                
-                // フォームの表示切り替え
-                hideAllFormSections();
-                document.getElementById('support-form').classList.add('active');
-                
-                // 現在のタブを更新
-                currentTab = 'support';
-            });
-
-            document.getElementById('consultation-btn').addEventListener('click', function() {
-                if (currentTab === 'consultation') return; // すでにアクティブなら何もしない
-                
-                // 相談依頼タブをアクティブに
-                document.getElementById('consultation-btn').classList.add('active');
-                document.getElementById('support-btn').classList.remove('active');
-                
-                // フォームの表示切り替え
-                hideAllFormSections();
-                
-                // 保存されたステートに基づいて適切なフォームを表示
-                if (consultationState === 'notice') {
-                    document.getElementById('consult-notice').classList.add('active');
-                } else {
-                    document.getElementById('consultation-form').classList.add('active');
-                }
-                
-                // 現在のタブを更新
-                currentTab = 'consultation';
-            });
-
-            // サポートミーティングフォーム送信処理
-            document.getElementById('meeting-form').addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                // すべてのデートピッカーを閉じる
-                closeAllDatepickers();
-                
-                // フォームデータの取得
-                const formData = {
-                    type: 'サポートミーティング',
-                    firstChoice: document.getElementById('first-choice').value,
-                    secondChoice: document.getElementById('second-choice').value,
-                    thirdChoice: document.getElementById('third-choice').value,
-                    fourthChoice: document.getElementById('fourth-choice').value,
-                    fifthChoice: document.getElementById('fifth-choice').value,
-                    content: document.getElementById('meeting-content').value
-                };
-                
-                // 必須項目チェック
-                if (!formData.firstChoice || !formData.secondChoice || !formData.thirdChoice) {
-                    alert("第1〜第3希望は必須項目です。日時を選択してください。");
-                    return;
-                }
-                
-                // ローカルストレージに一時保存
-                localStorage.setItem('formData', JSON.stringify(formData));
-                
-                // 確認画面に内容を表示
-                let summaryHTML = `
-                    <div style="text-align: left; margin: 20px 0;">
-                        <p><strong><i class="far fa-calendar-alt"></i> 第1希望:</strong> ${formData.firstChoice}</p>
-                        <p><strong><i class="far fa-calendar-alt"></i> 第2希望:</strong> ${formData.secondChoice}</p>
-                        <p><strong><i class="far fa-calendar-alt"></i> 第3希望:</strong> ${formData.thirdChoice}</p>
-                `;
-                
-                if (formData.fourthChoice) {
-                    summaryHTML += `<p><strong><i class="far fa-calendar-alt"></i> 第4希望:</strong> ${formData.fourthChoice}</p>`;
-                }
-                
-                if (formData.fifthChoice) {
-                    summaryHTML += `<p><strong><i class="far fa-calendar-alt"></i> 第5希望:</strong> ${formData.fifthChoice}</p>`;
-                }
-                
-                summaryHTML += `
-                        <p><strong><i class="far fa-comment-dots"></i> 内容:</strong> ${formData.content || '(未入力)'}</p>
-                    </div>
-                `;
-                
-                document.getElementById('meeting-summary').innerHTML = summaryHTML;
-                
-                // 確認画面表示
-                hideAllFormSections();
-                document.getElementById('meeting-confirmation').style.display = 'block';
-                document.getElementById('meeting-confirmation').classList.add('animated');
-                document.getElementById('meeting-confirmation').classList.add('slide-in');
-            });
-
-            // サポートミーティング確認ボタン
-            document.getElementById('meeting-confirm-btn').addEventListener('click', function() {
-                const formData = JSON.parse(localStorage.getItem('formData'));
-                
-                // LINEにデータを送信
-                let message = 
-                    `【サポートミーティング希望】\n` +
-                    `\n第1希望：${formData.firstChoice}` +
-                    `\n第2希望：${formData.secondChoice}` +
-                    `\n第3希望：${formData.thirdChoice}`;
-                    
-                if (formData.fourthChoice) {
-                    message += `\n第4希望：${formData.fourthChoice}`;
-                }
-                
-                if (formData.fifthChoice) {
-                    message += `\n第5希望：${formData.fifthChoice}`;
-                }
-                
-                message += `\n\n内容：${formData.content || '(未入力)'}`;
-                
-                sendToLine(message);
-            });
-
-            // 相談依頼の注意事項「次へ進む」ボタン
-            document.getElementById('yes-btn').addEventListener('click', function() {
-                hideAllFormSections();
-                document.getElementById('consultation-form').classList.add('active');
-                consultationState = 'form'; // 相談依頼フォームに移動したことを記録
-            });
-
-            // 相談依頼フォームの「戻る」ボタン
-            document.getElementById('back-btn').addEventListener('click', function() {
-                hideAllFormSections();
-                document.getElementById('consult-notice').classList.add('active');
-                consultationState = 'notice'; // 注意事項に戻ったことを記録
-            });
-
-            // 相談依頼フォーム送信処理
-            document.getElementById('consult-form').addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                // フォームデータの取得
-                const formData = {
-                    type: '相談依頼',
-                    content: document.getElementById('consult-content').value
-                };
-                
-                // 内容が空でないか確認
-                if (!formData.content.trim()) {
-                    alert("相談内容を入力してください。");
-                    return;
-                }
-                
-                // LINEにデータを送信
-                const message = 
-                    `【相談依頼】\n` +
-                    `\n内容：${formData.content}`;
-                    
-                sendToLine(message);
-            });
+    // LIFFの初期化
+    try {
+        liff.init({
+            liffId: "2007077943-Qz5kL7mm"
+        })
+        .then(() => {
+            console.log("LIFF initialized!");
+        })
+        .catch((err) => {
+            console.error("LIFF initialization failed", err);
+            alert("LINEの初期化に失敗しました。ページを再読み込みしてください。");
         });
+    } catch (e) {
+        console.log("LIFF初期化エラー:", e);
+    }
+
+    // 全てのflatpickrインスタンスを閉じる関数
+    function closeAllDatepickers() {
+        pickers.forEach(picker => {
+            if (picker && picker.isOpen) {
+                picker.close();
+            }
+        });
+        overlay.style.display = 'none';
+    }
+
+    // 日付時間ピッカーの初期化
+    const dateTimeConfig = {
+        enableTime: true,
+        dateFormat: "Y年m月d日 H:i",
+        minDate: "today",
+        locale: "ja",
+        time_24hr: true,
+        minuteIncrement: 30,
+        disableMobile: "true", // モバイルのネイティブピッカーを無効化
+        allowInput: false,
+        static: true,
+        onOpen: function(selectedDates, dateStr, instance) {
+            // 他のデートピッカーを閉じる
+            closeAllDatepickers();
+            
+            // オーバーレイを表示
+            overlay.style.display = 'block';
+            
+            // カレンダーのポジショニング修正
+            if (window.innerWidth <= 480) {
+                setTimeout(() => {
+                    const calendar = instance.calendarContainer;
+                    calendar.style.position = 'fixed';
+                    calendar.style.top = '50%';
+                    calendar.style.left = '50%';
+                    calendar.style.transform = 'translate(-50%, -50%)';
+                    calendar.style.zIndex = '99999';
+                    calendar.style.width = '300px';
+                }, 10);
+            }
+        },
+        onClose: function() {
+            // オーバーレイを非表示
+            overlay.style.display = 'none';
+        }
+    };
+    
+    // 時間範囲の制限（9:30-17:00）
+    dateTimeConfig.minTime = "09:30";
+    dateTimeConfig.maxTime = "17:00";
+    
+    // 土日を無効化
+    dateTimeConfig.disable = [
+        function(date) {
+            // 日曜(0)または土曜(6)の場合は選択不可
+            return date.getDay() === 0 || date.getDay() === 6;
+        }
+    ];
+    
+    // 各日時選択フィールドにflatpickrを適用
+    const dateInputs = document.querySelectorAll('.date-time-picker');
+    dateInputs.forEach(input => {
+        // 入力フィールドのデフォルトのタッチ動作を防止
+        input.addEventListener('focus', function(e) {
+            e.preventDefault();
+            this.blur();
+        });
+        
+        // 実際のflatpickrインスタンス作成
+        const fp = flatpickr(input, dateTimeConfig);
+        pickers.push(fp);
+        
+        // クリックイベントリスナーを追加
+        input.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // すでに開いている場合は何もしない
+            if (!fp.isOpen) {
+                // 他のデートピッカーを閉じてから開く
+                closeAllDatepickers();
+                fp.open();
+            }
+        });
+    });
+
+    // オーバーレイクリックでカレンダーを閉じる
+    overlay.addEventListener('click', function() {
+        closeAllDatepickers();
+    });
+
+    // LINEとの連携用
+    function sendToLine(formData) {
+        try {
+            liff.sendMessages([
+                {
+                    type: 'text',
+                    text: formData
+                }
+            ])
+            .then(() => {
+                console.log("メッセージ送信成功");
+                // フォームリセット
+                document.getElementById('meeting-form').reset();
+                document.getElementById('consult-form').reset();
+                
+                // 初期表示に戻す
+                document.getElementById('meeting-confirmation').style.display = 'none';
+                document.getElementById('support-form').classList.add('active');
+                document.getElementById('consult-notice').style.display = 'none';
+                document.getElementById('consultation-form').style.display = 'none';
+                
+                // タブとステートをリセット
+                currentTab = 'support';
+                consultationState = 'notice';
+                
+                alert("送信が完了しました。LINEに戻ります。");
+                
+                // LIFFウィンドウを閉じる
+                setTimeout(() => {
+                    liff.closeWindow();
+                }, 1000);
+            })
+            .catch((err) => {
+                console.error("メッセージ送信エラー", err);
+                alert("メッセージの送信に失敗しました: " + err.message);
+            });
+        } catch (e) {
+            console.error("LINE連携エラー:", e);
+            alert("LINE連携エラー: " + e.message);
+        }
+    }
+
+    // 全てのフォームセクションを非表示にする関数
+    function hideAllFormSections() {
+        document.getElementById('support-form').classList.remove('active');
+        document.getElementById('consult-notice').classList.remove('active');
+        document.getElementById('consultation-form').classList.remove('active');
+        document.getElementById('meeting-confirmation').style.display = 'none';
+        
+        // すべてのデートピッカーを閉じる
+        closeAllDatepickers();
+    }
+
+    // タブ切り替え処理
+    document.getElementById('support-btn').addEventListener('click', function() {
+        if (currentTab === 'support') return; // すでにアクティブなら何もしない
+        
+        // サポートミーティングタブをアクティブに
+        document.getElementById('support-btn').classList.add('active');
+        document.getElementById('consultation-btn').classList.remove('active');
+        
+        // フォームの表示切り替え
+        hideAllFormSections();
+        document.getElementById('support-form').classList.add('active');
+        
+        // 現在のタブを更新
+        currentTab = 'support';
+    });
+
+    document.getElementById('consultation-btn').addEventListener('click', function() {
+        if (currentTab === 'consultation') return; // すでにアクティブなら何もしない
+        
+        // 相談依頼タブをアクティブに
+        document.getElementById('consultation-btn').classList.add('active');
+        document.getElementById('support-btn').classList.remove('active');
+        
+        // フォームの表示切り替え
+        hideAllFormSections();
+        
+        // 保存されたステートに基づいて適切なフォームを表示
+        if (consultationState === 'notice') {
+            document.getElementById('consult-notice').classList.add('active');
+        } else {
+            document.getElementById('consultation-form').classList.add('active');
+        }
+        
+        // 現在のタブを更新
+        currentTab = 'consultation';
+    });
+
+    // サポートミーティングフォーム送信処理
+    document.getElementById('meeting-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // すべてのデートピッカーを閉じる
+        closeAllDatepickers();
+        
+        // フォームデータの取得
+        const formData = {
+            type: 'サポートミーティング',
+            firstChoice: document.getElementById('first-choice').value,
+            secondChoice: document.getElementById('second-choice').value,
+            thirdChoice: document.getElementById('third-choice').value,
+            fourthChoice: document.getElementById('fourth-choice').value,
+            fifthChoice: document.getElementById('fifth-choice').value,
+            content: document.getElementById('meeting-content').value
+        };
+        
+        // 必須項目チェック
+        if (!formData.firstChoice || !formData.secondChoice || !formData.thirdChoice) {
+            alert("第1〜第3希望は必須項目です。日時を選択してください。");
+            return;
+        }
+        
+        // 確認画面に内容を表示
+        let summaryHTML = `
+            <div style="text-align: left; margin: 20px 0;">
+                <p><strong><i class="far fa-calendar-alt"></i> 第1希望:</strong> ${formData.firstChoice}</p>
+                <p><strong><i class="far fa-calendar-alt"></i> 第2希望:</strong> ${formData.secondChoice}</p>
+                <p><strong><i class="far fa-calendar-alt"></i> 第3希望:</strong> ${formData.thirdChoice}</p>
+        `;
+        
+        if (formData.fourthChoice) {
+            summaryHTML += `<p><strong><i class="far fa-calendar-alt"></i> 第4希望:</strong> ${formData.fourthChoice}</p>`;
+        }
+        
+        if (formData.fifthChoice) {
+            summaryHTML += `<p><strong><i class="far fa-calendar-alt"></i> 第5希望:</strong> ${formData.fifthChoice}</p>`;
+        }
+        
+        if (formData.content) {
+            summaryHTML += `<p><strong><i class="far fa-comment-alt"></i> 内容:</strong> ${formData.content}</p>`;
+        }
+        
+        summaryHTML += `</div>`;
+        
+        document.getElementById('meeting-summary').innerHTML = summaryHTML;
+        
+        // フォームを非表示、確認画面を表示
+        document.getElementById('support-form').classList.remove('active');
+        document.getElementById('meeting-confirmation').style.display = 'block';
+        document.getElementById('meeting-confirmation').classList.add('animated');
+        document.getElementById('meeting-confirmation').classList.add('slide-in');
+    });
+
+    // 確認ボタンクリック
+    document.getElementById('meeting-confirm-btn').addEventListener('click', function() {
+        // フォームデータを文字列化
+        const formData = {
+            type: 'サポートミーティング',
+            firstChoice: document.getElementById('first-choice').value,
+            secondChoice: document.getElementById('second-choice').value,
+            thirdChoice: document.getElementById('third-choice').value,
+            fourthChoice: document.getElementById('fourth-choice').value || "指定なし",
+            fifthChoice: document.getElementById('fifth-choice').value || "指定なし",
+            content: document.getElementById('meeting-content').value || "記入なし"
+        };
+        
+        // 送信するメッセージを作成
+        let message = `■サポートミーティング希望\n\n`;
+        message += `【第1希望】${formData.firstChoice}\n`;
+        message += `【第2希望】${formData.secondChoice}\n`;
+        message += `【第3希望】${formData.thirdChoice}\n`;
+        
+        if (formData.fourthChoice !== "指定なし") {
+            message += `【第4希望】${formData.fourthChoice}\n`;
+        }
+        
+        if (formData.fifthChoice !== "指定なし") {
+            message += `【第5希望】${formData.fifthChoice}\n`;
+        }
+        
+        if (formData.content !== "記入なし") {
+            message += `\n【内容】\n${formData.content}`;
+        }
+        
+        // LINEにメッセージを送信
+        sendToLine(message);
+    });
+
+    // 相談依頼の「次へ進む」ボタン
+    document.getElementById('yes-btn').addEventListener('click', function() {
+        document.getElementById('consult-notice').classList.remove('active');
+        document.getElementById('consultation-form').classList.add('active');
+        document.getElementById('consultation-form').classList.add('animated');
+        document.getElementById('consultation-form').classList.add('slide-in');
+        consultationState = 'form';
+    });
+
+    // 相談依頼フォームの「戻る」ボタン
+    document.getElementById('back-btn').addEventListener('click', function() {
+        document.getElementById('consultation-form').classList.remove('active');
+        document.getElementById('consult-notice').classList.add('active');
+        document.getElementById('consult-notice').classList.add('animated');
+        document.getElementById('consult-notice').classList.add('slide-in');
+        consultationState = 'notice';
+    });
+
+    // 相談依頼フォーム送信処理
+    document.getElementById('consult-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // フォームデータの取得
+        const consultContent = document.getElementById('consult-content').value;
+        
+        // 必須項目チェック
+        if (!consultContent) {
+            alert("相談内容は必須項目です。");
+            return;
+        }
+        
+        // 送信するメッセージを作成
+        let message = `■相談依頼\n\n【相談内容】\n${consultContent}`;
+        
+        // LINEにメッセージを送信
+        sendToLine(message);
+    });
+
+    // デバイスに基づく追加最適化
+    function optimizeForDevice() {
+        const isMobile = window.innerWidth <= 480;
+        
+        if (isMobile) {
+            // iOS対応のズーム防止
+            const viewportMeta = document.querySelector('meta[name="viewport"]');
+            if (viewportMeta) {
+                viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+            }
+            
+            // 入力フィールドのフォントサイズを16px以上に設定（iOS自動ズーム防止）
+            const inputs = document.querySelectorAll('input[type="text"], textarea');
+            inputs.forEach(input => {
+                input.style.fontSize = '16px';
+            });
+        }
+    }
+    
+    // デバイス最適化を実行
+    optimizeForDevice();
+    
+    // リサイズ時にも最適化を再適用
+    window.addEventListener('resize', optimizeForDevice);
+});
     </script>
 </body>
 </html>
