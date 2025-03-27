@@ -291,124 +291,164 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/ja.min.js"></script>
     <script>
        document.addEventListener('DOMContentLoaded', function() {
-            const categorySelect = document.getElementById('category');
-            const categoryFields = {
-                'coupon': document.getElementById('coupon-fields'),
-                'rich-menu': document.getElementById('rich-menu-fields'),
-                'menu-add': document.getElementById('menu-add-fields'),
-                'other': document.getElementById('other-fields')
-            };
-            const errorContainer = document.getElementById('error-container');
+    const categorySelect = document.getElementById('category');
+    const categoryFields = {
+        'coupon': document.getElementById('coupon-fields'),
+        'rich-menu': document.getElementById('rich-menu-fields'),
+        'menu-add': document.getElementById('menu-add-fields'),
+        'other': document.getElementById('other-fields')
+    };
 
-            // Safely handle category change
-            categorySelect.addEventListener('change', function() {
-                // Hide all field sections first
+    // エラーコンテナを追加
+    const errorContainer = document.createElement('div');
+    errorContainer.id = 'error-container';
+    errorContainer.style.color = 'red';
+    errorContainer.style.marginBottom = '15px';
+    document.querySelector('.container').insertBefore(errorContainer, document.getElementById('support-form'));
+
+    // カテゴリー変更時のイベントリスナー (元のコードと同じ)
+    categorySelect.addEventListener('change', function() {
+        Object.values(categoryFields).forEach(field => {
+            if (field) {
+                field.style.display = 'none';
+            }
+        });
+        
+        const selectedCategory = this.value;
+        if (categoryFields[selectedCategory]) {
+            categoryFields[selectedCategory].style.display = 'block';
+        }
+    });
+
+    // Flatpickr の設定 (元のコードと同じ)
+    flatpickr(".flatpickr", {
+        locale: "ja",
+        dateFormat: "Y/m/d",
+    });
+
+    // ファイルアップロードプレースホルダー (元のコードと同じ)
+    ['coupon-image'].forEach(inputId => {
+        const fileInput = document.getElementById(inputId);
+        if (fileInput) {
+            const placeholder = fileInput.closest('.file-upload').querySelector('.file-upload-placeholder');
+            fileInput.addEventListener('change', function(e) {
+                if (this.files && this.files[0]) {
+                    placeholder.textContent = this.files[0].name;
+                }
+            });
+        }
+    });
+
+    // LINE へメッセージを送信する関数
+    async function sendToLine(message) {
+        // LINE Messaging API 用の設定 (実際の値に置き換えてください)
+        const LINE_CHANNEL_ACCESS_TOKEN = 'あなたのチャネルアクセストークン';
+        const LINE_USER_ID = 'メッセージを送信したいLINEユーザーIDまたはグループID';
+
+        try {
+            const response = await fetch('https://api.line.me/v2/bot/message/push', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`
+                },
+                body: JSON.stringify({
+                    to: LINE_USER_ID,
+                    messages: [{
+                        type: 'text',
+                        text: message
+                    }]
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`LINE API エラー: ${errorText}`);
+            }
+
+            return response;
+        } catch (error) {
+            errorContainer.textContent = `送信エラー: ${error.message}`;
+            console.error('送信エラー:', error);
+            throw error;
+        }
+    }
+
+    // フォーム送信イベントリスナー
+    const form = document.getElementById('support-form');
+    if (form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            errorContainer.textContent = ''; // 以前のエラーをクリア
+
+            // カテゴリー選択のバリデーション
+            const category = categorySelect.value;
+            if (!category) {
+                errorContainer.textContent = 'カテゴリーを選択してください。';
+                return;
+            }
+
+            // メッセージ内容の準備
+            let messageText = `サポートリクエスト - ${getCategoryLabel(category)}\n\n`;
+
+            try {
+                switch(category) {
+                    case 'coupon':
+                        messageText += prepareCouponMessage();
+                        break;
+                    case 'rich-menu':
+                        messageText += prepareRichMenuMessage();
+                        break;
+                    case 'menu-add':
+                        messageText += prepareMenuMessage();
+                        break;
+                    case 'other':
+                        messageText += prepareOtherMessage();
+                        break;
+                }
+
+                // LINEにメッセージを送信
+                await sendToLine(messageText);
+
+                // 成功アラート
+                alert('リクエストが正常に送信されました！');
+                form.reset(); // フォームをリセット
+                
+                // すべてのカテゴリー固有のフィールドを非表示
                 Object.values(categoryFields).forEach(field => {
                     if (field) {
                         field.style.display = 'none';
                     }
                 });
-                
-                // Show selected category's fields
-                const selectedCategory = this.value;
-                if (categoryFields[selectedCategory]) {
-                    categoryFields[selectedCategory].style.display = 'block';
-                }
-            });
-
-            // Flatpickr date range
-            flatpickr(".flatpickr", {
-                locale: "ja",
-                dateFormat: "Y/m/d",
-            });
-
-            // File upload placeholders
-            ['coupon-image'].forEach(inputId => {
-                const fileInput = document.getElementById(inputId);
-                if (fileInput) {
-                    const placeholder = fileInput.closest('.file-upload').querySelector('.file-upload-placeholder');
-                    fileInput.addEventListener('change', function(e) {
-                        if (this.files && this.files[0]) {
-                            placeholder.textContent = this.files[0].name;
-                        }
-                    });
-                }
-            });
-
-            // Form submission
-            const form = document.getElementById('support-form');
-            if (form) {
-                form.addEventListener('submit', async function(e) {
-                    e.preventDefault();
-                    errorContainer.textContent = ''; // Clear previous errors
-
-                    // Validate category selection
-                    const category = categorySelect.value;
-                    if (!category) {
-                        errorContainer.textContent = 'カテゴリーを選択してください。';
-                        return;
-                    }
-
-                    // Prepare message content based on category
-                    let messageText = `サポートリクエスト - ${getCategoryLabel(category)}\n\n`;
-
-                    try {
-                        switch(category) {
-                            case 'coupon':
-                                messageText += prepareCouponMessage();
-                                break;
-                            case 'rich-menu':
-                                messageText += prepareRichMenuMessage();
-                                break;
-                            case 'menu-add':
-                                messageText += prepareMenuMessage();
-                                break;
-                            case 'other':
-                                messageText += prepareOtherMessage();
-                                break;
-                        }
-
-                        // Send message to LINE
-                        await sendToLine(messageText);
-
-                        // Success alert
-                        alert('リクエストが正常に送信されました！');
-                        form.reset(); // Reset form
-                        
-                        // Hide all category-specific fields
-                        Object.values(categoryFields).forEach(field => {
-                            if (field) {
-                                field.style.display = 'none';
-                            }
-                        });
-                    } catch (error) {
-                        errorContainer.textContent = 'メッセージの送信中にエラーが発生しました。';
-                        console.error('送信エラー:', error);
-                    }
-                });
+            } catch (error) {
+                errorContainer.textContent = 'メッセージの送信中にエラーが発生しました。';
+                console.error('送信エラー:', error);
             }
+        });
+    }
 
-            // Helper functions to prepare messages
-            function getCategoryLabel(category) {
-                const categoryLabels = {
-                    'coupon': 'クーポン',
-                    'rich-menu': 'リッチメニュー',
-                    'menu-add': 'メニュー追加・変更',
-                    'other': 'その他'
-                };
-                return categoryLabels[category] || category;
-            }
+    // メッセージ準備用のヘルパー関数 (元のコードと同じ)
+    function getCategoryLabel(category) {
+        const categoryLabels = {
+            'coupon': 'クーポン',
+            'rich-menu': 'リッチメニュー',
+            'menu-add': 'メニュー追加・変更',
+            'other': 'その他'
+        };
+        return categoryLabels[category] || category;
+    }
 
-            function prepareCouponMessage() {
-                const couponType = document.getElementById('coupon-type').value;
-                const couponName = document.getElementById('coupon-name').value;
-                const startDate = document.getElementById('coupon-start-date').value;
-                const endDate = document.getElementById('coupon-end-date').value;
-                const couponGuide = document.getElementById('coupon-guide').value;
-                const usageLimit = document.querySelector('input[name="usage-limit"]:checked')?.value;
-                const couponUsage = document.getElementById('coupon-usage').value;
+    // 各カテゴリーのメッセージ準備関数 (元のコードと同じ)
+    function prepareCouponMessage() {
+        const couponType = document.getElementById('coupon-type').value;
+        const couponName = document.getElementById('coupon-name').value;
+        const startDate = document.getElementById('coupon-start-date').value;
+        const endDate = document.getElementById('coupon-end-date').value;
+        const couponGuide = document.getElementById('coupon-guide').value;
+        const usageLimit = document.querySelector('input[name="usage-limit"]:checked')?.value;
+        const couponUsage = document.getElementById('coupon-usage').value;
 
-                return `
+        return `
 クーポンの種類: ${couponType}
 クーポン名: ${couponName}
 有効期間: ${startDate} ～ ${endDate}
@@ -416,65 +456,39 @@
 利用可能数: ${usageLimit === 'once' ? '1回のみ' : '無制限'}
 利用用途: ${couponUsage}
 `;
-            }
+    }
 
-            function prepareRichMenuMessage() {
-                const richMenuType = document.querySelector('input[name="rich-menu-type"]:checked')?.value;
-                const richMenuContent = document.getElementById('rich-menu-content').value;
+    function prepareRichMenuMessage() {
+        const richMenuType = document.querySelector('input[name="rich-menu-type"]:checked')?.value;
+        const richMenuContent = document.getElementById('rich-menu-content').value;
 
-                return `
+        return `
 リッチメニュー種類: ${richMenuType === 'new' ? '新規作成' : 'デザイン変更'}
 内容: ${richMenuContent}
 `;
-            }
+    }
 
-            function prepareMenuMessage() {
-                const menuAction = document.querySelector('input[name="menu-action"]:checked')?.value;
-                const menuDetails = document.getElementById('menu-details').value;
+    function prepareMenuMessage() {
+        const menuAction = document.querySelector('input[name="menu-action"]:checked')?.value;
+        const menuDetails = document.getElementById('menu-details').value;
 
-                const actionLabels = {
-                    'add': 'メニュー追加',
-                    'change': 'メニュー変更',
-                    'delete': 'メニュー削除'
-                };
+        const actionLabels = {
+            'add': 'メニュー追加',
+            'change': 'メニュー変更',
+            'delete': 'メニュー削除'
+        };
 
-                return `
+        return `
 メニュー操作: ${actionLabels[menuAction] || menuAction}
 内容: ${menuDetails}
 `;
-            }
+    }
 
-            function prepareOtherMessage() {
-                const otherContent = document.getElementById('other-content').value;
-                return `内容: ${otherContent}`;
-            }
-
-            // Function to send message to LINE
-            async function sendToLine(message) {
-                // Replace with your actual LINE Messaging API configuration
-                const lineAccessToken = 'YOUR_LINE_ACCESS_TOKEN';
-                const lineUserId = 'YOUR_LINE_USER_ID'; // or a predefined support group ID
-
-                const response = await fetch('https://api.line.me/v2/bot/message/push', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${lineAccessToken}`
-                    },
-                    body: JSON.stringify({
-                        to: lineUserId,
-                        messages: [{
-                            type: 'text',
-                            text: message
-                        }]
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to send message to LINE');
-                }
-            }
-        });
+    function prepareOtherMessage() {
+        const otherContent = document.getElementById('other-content').value;
+        return `内容: ${otherContent}`;
+    }
+});
     </script>
 </body>
 </html>
