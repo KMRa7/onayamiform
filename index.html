@@ -725,12 +725,12 @@
 
     // 相談依頼の「次へ進む」ボタン
     document.getElementById('yes-btn').addEventListener('click', function() {
-        document.getElementById('consult-notice').classList.remove('active');
-        document.getElementById('consultation-form').classList.add('active');
-        document.getElementById('consultation-form').classList.add('animated');
-        document.getElementById('consultation-form').classList.add('slide-in');
-        consultationState = 'form';
-        console.log("Consultation state changed to form");
+    // 相談依頼の同意ページから相談依頼ページへ遷移
+        function switchToSupportRequest() {
+            window.location.href = 'support-request.html';
+        }
+        
+        switchToSupportRequest();
     });
 
     // 相談依頼フォームの「戻る」ボタン
