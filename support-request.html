@@ -340,39 +340,37 @@
     });
 
     // LINE へメッセージを送信する関数
-    async function sendToLine(message) {
-        // LINE Messaging API 用の設定 (実際の値に置き換えてください)
-        const LINE_CHANNEL_ACCESS_TOKEN = 'あなたのチャネルアクセストークン';
-        const LINE_USER_ID = 'メッセージを送信したいLINEユーザーIDまたはグループID';
+    async function sendToLine(replyToken, message) {
+    const LINE_CHANNEL_ACCESS_TOKEN = 'f3ekKvU7TXGw1hFkCRk/EsuQsF3q9GjxO78tNJTdrytcp5yDrOR78EBx1xLutsthZvvJAKsYyWVkOF+5QFKkeGZ2jI7nbTSfmdua6u4pGde2vEuBqm37Td4y4ydEGviwFtOJ6Wadk+4FM7nqJ74wKgdB04t89/1O/w1cDnyilFU=';
 
-        try {
-            const response = await fetch('https://api.line.me/v2/bot/message/push', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`
-                },
-                body: JSON.stringify({
-                    to: LINE_USER_ID,
-                    messages: [{
-                        type: 'text',
-                        text: message
-                    }]
-                })
-            });
+    try {
+        const response = await fetch('https://api.line.me/v2/bot/message/reply', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`
+            },
+            body: JSON.stringify({
+                replyToken: replyToken,
+                messages: [{
+                    type: 'text',
+                    text: message
+                }]
+            })
+        });
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`LINE API エラー: ${errorText}`);
-            }
-
-            return response;
-        } catch (error) {
-            errorContainer.textContent = `送信エラー: ${error.message}`;
-            console.error('送信エラー:', error);
-            throw error;
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`LINE API エラー: ${errorText}`);
         }
+
+        return response;
+    } catch (error) {
+        errorContainer.textContent = `送信エラー: ${error.message}`;
+        console.error('送信エラー:', error);
+        throw error;
     }
+}
 
     // フォーム送信イベントリスナー
     const form = document.getElementById('support-form');
