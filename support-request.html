@@ -342,12 +342,17 @@
 // LINE へメッセージを送信する関数
 async function sendToLine(message) {
     try {
-        const response = await fetch('/api/line-message', {
+        const gasWebAppUrl = 'https://script.google.com/macros/s/AKfycbyHAPeFsZCYERO0EcGs24OfPQf39w3Ho9DXM5onJxeFoklTCbriuUPhnYSvr3ahemRr/exec';
+        const response = await fetch(gasWebAppUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ message: message })
+            body: JSON.stringify({ 
+                message: message,
+                // 送信元の情報も含められます
+                source: window.location.href 
+            })
         });
 
         if (!response.ok) {
