@@ -399,19 +399,43 @@
 
     // LINE へメッセージを送信する関数
     async function sendToLine(message) {
-    try {
-        // GASウェブアプリのURL - make sure this is deployed as a web app with "Anyone, even anonymous" access
-        const gasWebAppUrl = 'https://script.google.com/macros/s/AKfycbzYsjfITxYf1pnF0pPsGYQ4eF4m7nFbTjZTeiA5wPBv60O9WVSsTG0AVTy9EfY0McZ5Ig/exec';
-        
-        // Use fetch with CORS mode
-        const response = await fetch(`${gasWebAppUrl}?message=${encodeURIComponent(message)}&source=${encodeURIComponent(window.location.href)}`, {
-            method: 'GET',
-            mode: 'no-cors' // This is important for cross-origin requests to GAS
-        });
-        
-        // Since we can't read the response with no-cors mode, we'll assume success
-        // In a production environment, you might want to implement a more robust solution
-        return true;
+        try {
+            // GASウェブアプリのURL - デプロイ済みのWebアプリURLを設定
+            const gasWebAppUrl = 'https://script.google.com/macros/s/AKfycbzBThqS4wizuQTJZspKV5tfnSq3gpoRQnjwnlcSlK3k5J3z0LswrX8kHdBb_9Gf9QhGUg/exec';
+            
+            // 送信状態を表示
+            errorContainer.textContent = '送信中...';
+            
+            // JSONP方式を使用してCORSの問題を回避
+            return new Promise((resolve, reject) => {
+                const callbackName = 'callback_' + Math.floor(Math.random() * 1000000);
+                window[callbackName] = function(data) {
+                    delete window[callbackName];
+                    document.body.removeChild(script);
+                    
+                    if (data.success) {
+                        errorContainer.textContent = '';
+                        resolve(true);
+                    } else {
+                        errorContainer.textContent = `エラー: ${data.error || '不明なエラー'}`;
+                        reject(new Error(data.error || '不明なエラー'));
+                    }
+                };
+                
+                const script = document.createElement('script');
+                script.src = `${gasWebAppUrl}?message=${encodeURIComponent(message)}&callback=${callbackName}`;
+                document.body.appendChild(script);
+                
+                // タイムアウト処理
+                setTimeout(() => {
+                    if (window[callbackName]) {
+                        delete window[callbackName];
+                        document.body.removeChild(script);
+                        errorContainer.textContent = 'タイムアウト: サーバーからの応答がありませんでした。';
+                        reject(new Error('タイムアウト'));
+                    }
+                }, 10000); // 10秒でタイムアウト
+            });
         } catch (error) {
             errorContainer.textContent = `送信エラー: ${error.message}`;
             console.error('送信エラー:', error);
