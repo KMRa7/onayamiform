@@ -401,7 +401,7 @@
     async function sendToLine(message) {
     try {
         // GASウェブアプリのURL - make sure this is deployed as a web app with "Anyone, even anonymous" access
-        const gasWebAppUrl = 'https://script.google.com/macros/s/AKfycbzBThqS4wizuQTJZspKV5tfnSq3gpoRQnjwnlcSlK3k5J3z0LswrX8kHdBb_9Gf9QhGUg/exec';
+        const gasWebAppUrl = 'https://script.google.com/macros/s/AKfycbzYsjfITxYf1pnF0pPsGYQ4eF4m7nFbTjZTeiA5wPBv60O9WVSsTG0AVTy9EfY0McZ5Ig/exec';
         
         // Use fetch with CORS mode
         const response = await fetch(`${gasWebAppUrl}?message=${encodeURIComponent(message)}&source=${encodeURIComponent(window.location.href)}`, {
