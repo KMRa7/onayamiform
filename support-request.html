@@ -172,6 +172,8 @@
             <h1>サポートリクエスト</h1>
         </div>
 
+        <div id="error-container" style="color: red; margin-bottom: 15px;"></div>
+
         <form id="support-form">
             <div class="form-group">
                 <label for="category">カテゴリー</label>
@@ -184,7 +186,7 @@
                 </select>
             </div>
 
-            <!-- クーポン専用フィールド（変更なし） -->
+            <!-- クーポン専用フィールド -->
             <div id="coupon-fields" style="display:none;">
                 <div class="form-group file-upload">
                     <div class="file-upload-placeholder">
@@ -206,9 +208,13 @@
                 <div class="form-group">
                     <label>有効期間</label>
                     <div class="date-range-container">
-                        <input type="text" id="coupon-start-date" name="coupon-start-date" class="flatpickr" placeholder="開始日を選択" />
+                        <div class="form-group">
+                            <input type="text" id="coupon-start-date" name="coupon-start-date" class="flatpickr" placeholder="開始日を選択" />
+                        </div>
                         <span>～</span>
-                        <input type="text" id="coupon-end-date" name="coupon-end-date" class="flatpickr" placeholder="終了日を選択" />
+                        <div class="form-group">
+                            <input type="text" id="coupon-end-date" name="coupon-end-date" class="flatpickr" placeholder="終了日を選択" />
+                        </div>
                     </div>
                 </div>
                 
@@ -234,7 +240,7 @@
                 </div>
             </div>
 
-            <!-- リッチメニュー専用フィールド（変更あり） -->
+            <!-- リッチメニュー専用フィールド -->
             <div id="rich-menu-fields" style="display:none;">
                 <div class="form-group">
                     <label>リッチメニュー種類</label>
@@ -253,7 +259,7 @@
                 </div>
             </div>
 
-            <!-- メニュー追加・変更専用フィールド（変更あり） -->
+            <!-- メニュー追加・変更専用フィールド -->
             <div id="menu-add-fields" style="display:none;">
                 <div class="form-group">
                     <label>メニュー操作</label>
@@ -275,7 +281,7 @@
                 </div>
             </div>
 
-            <!-- その他専用フィールド（変更あり） -->
+            <!-- その他専用フィールド -->
             <div id="other-fields" style="display:none;">
                 <div class="form-group">
                     <label for="other-content">内容</label>
@@ -299,14 +305,9 @@
         'other': document.getElementById('other-fields')
     };
 
-    // エラーコンテナを追加
-    const errorContainer = document.createElement('div');
-    errorContainer.id = 'error-container';
-    errorContainer.style.color = 'red';
-    errorContainer.style.marginBottom = '15px';
-    document.querySelector('.container').insertBefore(errorContainer, document.getElementById('support-form'));
+    const errorContainer = document.getElementById('error-container');
 
-    // カテゴリー変更時のイベントリスナー (元のコードと同じ)
+    // カテゴリー変更時のイベントリスナー
     categorySelect.addEventListener('change', function() {
         Object.values(categoryFields).forEach(field => {
             if (field) {
@@ -320,13 +321,13 @@
         }
     });
 
-    // Flatpickr の設定 (元のコードと同じ)
+    // Flatpickr の設定
     flatpickr(".flatpickr", {
         locale: "ja",
         dateFormat: "Y/m/d",
     });
 
-    // ファイルアップロードプレースホルダー (元のコードと同じ)
+    // ファイルアップロードプレースホルダー
     ['coupon-image'].forEach(inputId => {
         const fileInput = document.getElementById(inputId);
         if (fileInput) {
@@ -339,162 +340,108 @@
         }
     });
 
-// フォーム送信イベントリスナー
-const form = document.getElementById('support-form');
-if (form) {
-    form.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        errorContainer.textContent = ''; // 以前のエラーをクリア
+    // フォーム送信イベントリスナー
+    const form = document.getElementById('support-form');
+    if (form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            errorContainer.textContent = ''; // 以前のエラーをクリア
 
-        // カテゴリー選択のバリデーション
-        const category = categorySelect.value;
-        if (!category) {
-            errorContainer.textContent = 'カテゴリーを選択してください。';
-            return;
-        }
-
-        // メッセージ内容の準備
-        let messageText = `サポートリクエスト - ${getCategoryLabel(category)}\n\n`;
-
-        try {
-            switch(category) {
-                case 'coupon':
-                    messageText += prepareCouponMessage();
-                    break;
-                case 'rich-menu':
-                    messageText += prepareRichMenuMessage();
-                    break;
-                case 'menu-add':
-                    messageText += prepareMenuMessage();
-                    break;
-                case 'other':
-                    messageText += prepareOtherMessage();
-                    break;
+            // カテゴリー選択のバリデーション
+            const category = categorySelect.value;
+            if (!category) {
+                errorContainer.textContent = 'カテゴリーを選択してください。';
+                return;
             }
 
-            // LINEにメッセージを送信
-            const success = await sendToLine(messageText);
-            
-            if (success) {
-                // 成功アラート
-                alert('リクエストが正常に送信されました！');
-                form.reset(); // フォームをリセット
-                
-                // すべてのカテゴリー固有のフィールドを非表示
-                Object.values(categoryFields).forEach(field => {
-                    if (field) {
-                        field.style.display = 'none';
-                    }
-                });
-            } else {
-                throw new Error('送信に失敗しました');
-            }
-        } catch (error) {
-            errorContainer.textContent = 'メッセージの送信中にエラーが発生しました。';
-            console.error('送信エラー:', error);
-        }
-    });
-}
+            // メッセージ内容の準備
+            let messageText = `サポートリクエスト - ${getCategoryLabel(category)}\n\n`;
 
-// LINE へメッセージを送信する関数
-async function sendToLine(message) {
-    try {
-        // GASウェブアプリのURL
-        const gasWebAppUrl = 'https://script.google.com/macros/s/AKfycbwhyohDojWlUlJs4rZJQzCZ-gftyR1PBKwNgO2fsYNugBxuGYP80GK98TmOTwgqUQ1O/exec';
-        
-        // フォームデータとして送信
-        const formData = new FormData();
-        formData.append('message', message);
-        formData.append('source', window.location.href);
-        
-        // JSONPを使用してCORS制限を回避
-        return new Promise((resolve, reject) => {
-            const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
-            window[callbackName] = function(data) {
-                delete window[callbackName];
-                document.body.removeChild(script);
-                if (data.success) {
-                    resolve(true);
-                } else {
-                    reject(new Error(data.error || '不明なエラーが発生しました'));
+            try {
+                switch(category) {
+                    case 'coupon':
+                        messageText += prepareCouponMessage();
+                        break;
+                    case 'rich-menu':
+                        messageText += prepareRichMenuMessage();
+                        break;
+                    case 'menu-add':
+                        messageText += prepareMenuMessage();
+                        break;
+                    case 'other':
+                        messageText += prepareOtherMessage();
+                        break;
                 }
-            };
 
-            const script = document.createElement('script');
-            script.src = `${gasWebAppUrl}?message=${encodeURIComponent(message)}&source=${encodeURIComponent(window.location.href)}&callback=${callbackName}`;
-            document.body.appendChild(script);
+                // LINEにメッセージを送信
+                const success = await sendToLine(messageText);
+                
+                if (success) {
+                    // 成功アラート
+                    alert('リクエストが正常に送信されました！');
+                    form.reset(); // フォームをリセット
+                    
+                    // すべてのカテゴリー固有のフィールドを非表示
+                    Object.values(categoryFields).forEach(field => {
+                        if (field) {
+                            field.style.display = 'none';
+                        }
+                    });
+                } else {
+                    throw new Error('送信に失敗しました');
+                }
+            } catch (error) {
+                errorContainer.textContent = 'メッセージの送信中にエラーが発生しました。';
+                console.error('送信エラー:', error);
+            }
+        });
+    }
+
+    // LINE へメッセージを送信する関数
+    async function sendToLine(message) {
+        try {
+            // GASウェブアプリのURL
+            const gasWebAppUrl = 'https://script.google.com/macros/s/AKfycbwhyohDojWlUlJs4rZJQzCZ-gftyR1PBKwNgO2fsYNugBxuGYP80GK98TmOTwgqUQ1O/exec';
             
-            // タイムアウト処理
-            setTimeout(() => {
-                if (window[callbackName]) {
+            // フォームデータとして送信
+            const formData = new FormData();
+            formData.append('message', message);
+            formData.append('source', window.location.href);
+            
+            // JSONPを使用してCORS制限を回避
+            return new Promise((resolve, reject) => {
+                const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
+                window[callbackName] = function(data) {
                     delete window[callbackName];
                     document.body.removeChild(script);
-                    reject(new Error('リクエストがタイムアウトしました'));
-                }
-            }, 10000);
-        });
-    } catch (error) {
-        errorContainer.textContent = `送信エラー: ${error.message}`;
-        console.error('送信エラー:', error);
-        return false;
-    }
-}
+                    if (data.success) {
+                        resolve(true);
+                    } else {
+                        reject(new Error(data.error || '不明なエラーが発生しました'));
+                    }
+                };
 
-// フォーム送信イベントリスナー
-const form = document.getElementById('support-form');
-if (form) {
-    form.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        errorContainer.textContent = ''; // 以前のエラーをクリア
-
-        // カテゴリー選択のバリデーション
-        const category = categorySelect.value;
-        if (!category) {
-            errorContainer.textContent = 'カテゴリーを選択してください。';
-            return;
-        }
-
-        // メッセージ内容の準備
-        let messageText = `サポートリクエスト - ${getCategoryLabel(category)}\n\n`;
-
-        try {
-            switch(category) {
-                case 'coupon':
-                    messageText += prepareCouponMessage();
-                    break;
-                case 'rich-menu':
-                    messageText += prepareRichMenuMessage();
-                    break;
-                case 'menu-add':
-                    messageText += prepareMenuMessage();
-                    break;
-                case 'other':
-                    messageText += prepareOtherMessage();
-                    break;
-            }
-
-            // LINEにメッセージを送信
-            await sendToLine(messageText);
-
-            // 成功アラート
-            alert('リクエストが正常に送信されました！');
-            form.reset(); // フォームをリセット
-            
-            // すべてのカテゴリー固有のフィールドを非表示
-            Object.values(categoryFields).forEach(field => {
-                if (field) {
-                    field.style.display = 'none';
-                }
+                const script = document.createElement('script');
+                script.src = `${gasWebAppUrl}?message=${encodeURIComponent(message)}&source=${encodeURIComponent(window.location.href)}&callback=${callbackName}`;
+                document.body.appendChild(script);
+                
+                // タイムアウト処理
+                setTimeout(() => {
+                    if (window[callbackName]) {
+                        delete window[callbackName];
+                        document.body.removeChild(script);
+                        reject(new Error('リクエストがタイムアウトしました'));
+                    }
+                }, 10000);
             });
         } catch (error) {
-            errorContainer.textContent = 'メッセージの送信中にエラーが発生しました。';
+            errorContainer.textContent = `送信エラー: ${error.message}`;
             console.error('送信エラー:', error);
+            return false;
         }
-    });
-}
-
+    }
     
-    // メッセージ準備用のヘルパー関数 (元のコードと同じ)
+    // メッセージ準備用のヘルパー関数
     function getCategoryLabel(category) {
         const categoryLabels = {
             'coupon': 'クーポン',
@@ -505,7 +452,7 @@ if (form) {
         return categoryLabels[category] || category;
     }
 
-    // 各カテゴリーのメッセージ準備関数 (元のコードと同じ)
+    // 各カテゴリーのメッセージ準備関数
     function prepareCouponMessage() {
         const couponType = document.getElementById('coupon-type').value;
         const couponName = document.getElementById('coupon-name').value;
