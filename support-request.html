@@ -339,32 +339,104 @@
         }
     });
 
+// フォーム送信イベントリスナー
+const form = document.getElementById('support-form');
+if (form) {
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        errorContainer.textContent = ''; // 以前のエラーをクリア
+
+        // カテゴリー選択のバリデーション
+        const category = categorySelect.value;
+        if (!category) {
+            errorContainer.textContent = 'カテゴリーを選択してください。';
+            return;
+        }
+
+        // メッセージ内容の準備
+        let messageText = `サポートリクエスト - ${getCategoryLabel(category)}\n\n`;
+
+        try {
+            switch(category) {
+                case 'coupon':
+                    messageText += prepareCouponMessage();
+                    break;
+                case 'rich-menu':
+                    messageText += prepareRichMenuMessage();
+                    break;
+                case 'menu-add':
+                    messageText += prepareMenuMessage();
+                    break;
+                case 'other':
+                    messageText += prepareOtherMessage();
+                    break;
+            }
+
+            // LINEにメッセージを送信
+            const success = await sendToLine(messageText);
+            
+            if (success) {
+                // 成功アラート
+                alert('リクエストが正常に送信されました！');
+                form.reset(); // フォームをリセット
+                
+                // すべてのカテゴリー固有のフィールドを非表示
+                Object.values(categoryFields).forEach(field => {
+                    if (field) {
+                        field.style.display = 'none';
+                    }
+                });
+            } else {
+                throw new Error('送信に失敗しました');
+            }
+        } catch (error) {
+            errorContainer.textContent = 'メッセージの送信中にエラーが発生しました。';
+            console.error('送信エラー:', error);
+        }
+    });
+}
+
 // LINE へメッセージを送信する関数
 async function sendToLine(message) {
     try {
-        const gasWebAppUrl = 'https://script.google.com/macros/s/AKfycbxkqiIn297g0r6a26Nq6KamhydAF8R3ncZGzd6_EZdyAReHGxD58NwIURY5_oIQaBVx_Q/exec';
-        const response = await fetch(gasWebAppUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ 
-                message: message,
-                // 送信元の情報も含められます
-                source: window.location.href 
-            })
+        // GASウェブアプリのURL
+        const gasWebAppUrl = 'https://script.google.com/macros/s/AKfycbwhyohDojWlUlJs4rZJQzCZ-gftyR1PBKwNgO2fsYNugBxuGYP80GK98TmOTwgqUQ1O/exec';
+        
+        // フォームデータとして送信
+        const formData = new FormData();
+        formData.append('message', message);
+        formData.append('source', window.location.href);
+        
+        // JSONPを使用してCORS制限を回避
+        return new Promise((resolve, reject) => {
+            const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
+            window[callbackName] = function(data) {
+                delete window[callbackName];
+                document.body.removeChild(script);
+                if (data.success) {
+                    resolve(true);
+                } else {
+                    reject(new Error(data.error || '不明なエラーが発生しました'));
+                }
+            };
+
+            const script = document.createElement('script');
+            script.src = `${gasWebAppUrl}?message=${encodeURIComponent(message)}&source=${encodeURIComponent(window.location.href)}&callback=${callbackName}`;
+            document.body.appendChild(script);
+            
+            // タイムアウト処理
+            setTimeout(() => {
+                if (window[callbackName]) {
+                    delete window[callbackName];
+                    document.body.removeChild(script);
+                    reject(new Error('リクエストがタイムアウトしました'));
+                }
+            }, 10000);
         });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`送信エラー: ${errorText}`);
-        }
-
-        return response;
     } catch (error) {
         errorContainer.textContent = `送信エラー: ${error.message}`;
         console.error('送信エラー:', error);
-        throw error;
+        return false;
     }
 }
 
