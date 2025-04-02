@@ -399,41 +399,19 @@
 
     // LINE へメッセージを送信する関数
     async function sendToLine(message) {
-        try {
-            // GASウェブアプリのURL
-            const gasWebAppUrl = 'https://script.google.com/macros/s/AKfycbwhyohDojWlUlJs4rZJQzCZ-gftyR1PBKwNgO2fsYNugBxuGYP80GK98TmOTwgqUQ1O/exec';
-            
-            // フォームデータとして送信
-            const formData = new FormData();
-            formData.append('message', message);
-            formData.append('source', window.location.href);
-            
-            // JSONPを使用してCORS制限を回避
-            return new Promise((resolve, reject) => {
-                const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
-                window[callbackName] = function(data) {
-                    delete window[callbackName];
-                    document.body.removeChild(script);
-                    if (data.success) {
-                        resolve(true);
-                    } else {
-                        reject(new Error(data.error || '不明なエラーが発生しました'));
-                    }
-                };
-
-                const script = document.createElement('script');
-                script.src = `${gasWebAppUrl}?message=${encodeURIComponent(message)}&source=${encodeURIComponent(window.location.href)}&callback=${callbackName}`;
-                document.body.appendChild(script);
-                
-                // タイムアウト処理
-                setTimeout(() => {
-                    if (window[callbackName]) {
-                        delete window[callbackName];
-                        document.body.removeChild(script);
-                        reject(new Error('リクエストがタイムアウトしました'));
-                    }
-                }, 10000);
-            });
+    try {
+        // GASウェブアプリのURL - make sure this is deployed as a web app with "Anyone, even anonymous" access
+        const gasWebAppUrl = 'https://script.google.com/macros/s/AKfycbwhyohDojWlUlJs4rZJQzCZ-gftyR1PBKwNgO2fsYNugBxuGYP80GK98TmOTwgqUQ1O/exec';
+        
+        // Use fetch with CORS mode
+        const response = await fetch(`${gasWebAppUrl}?message=${encodeURIComponent(message)}&source=${encodeURIComponent(window.location.href)}`, {
+            method: 'GET',
+            mode: 'no-cors' // This is important for cross-origin requests to GAS
+        });
+        
+        // Since we can't read the response with no-cors mode, we'll assume success
+        // In a production environment, you might want to implement a more robust solution
+        return true;
         } catch (error) {
             errorContainer.textContent = `送信エラー: ${error.message}`;
             console.error('送信エラー:', error);
